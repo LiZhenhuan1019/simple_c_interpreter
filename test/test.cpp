@@ -4,6 +4,7 @@
 #include <cassert>
 #include <iostream>
 #include "../symbol_table.h"
+#include "../expr_calc.h"
 void test_symbol_table()
 {
     symbol_table s;
@@ -20,7 +21,12 @@ void test_symbol_table()
 }
 void test_expr_calc()
 {
-
+    symbol_table s;
+    expr_calc expr(s);
+    std::string str("12 + 31+12 * 35 /5+ 21;");
+    code_fragment f(str);
+    //std::cout<<expr.value_of(f);
+    assert(expr.value_of(f) == 148);
 }
 void test_all()
 {
