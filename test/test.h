@@ -4,5 +4,5 @@
 
 #ifndef SIMPLE_C_INTERPRETER_TEST_H
 #define SIMPLE_C_INTERPRETER_TEST_H
-void test_symbol_table();
+void test_all();
 #endif //SIMPLE_C_INTERPRETER_TEST_H
