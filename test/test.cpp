@@ -19,7 +19,27 @@ void test_symbol_table()
     s.remove("a");
     assert(s.get("a").value() == 5);
 }
-void test_expr_calc0()
+void test_expr_calc_comma()
+{
+    symbol_table s;
+    expr_calc expr(s);
+    std::string str("12,31+12*35,5+21;");
+    code_fragment f(str);
+    //std::cout<<expr.value_of(f);
+    assert(expr.value_of(f) == 26);
+}
+void test_expr_calc_assignment()
+{
+    symbol_table s;
+    s.add("a");
+
+    expr_calc expr(s);
+    std::string str("a=5,a+5;");
+    code_fragment f(str);
+    //std::cout<<expr.value_of(f);
+    assert(expr.value_of(f) == 10);
+}
+void test_expr_calc_arithmetic()
 {
     symbol_table s;
     expr_calc expr(s);
@@ -28,7 +48,16 @@ void test_expr_calc0()
     //std::cout<<expr.value_of(f);
     assert(expr.value_of(f) == 148);
 }
-void test_expr_calc1()
+void test_expr_calc_association()
+{
+    symbol_table s;
+    expr_calc expr(s);
+    std::string str("60/3/5;");
+    code_fragment f(str);
+    //std::cout<<expr.value_of(f);
+    assert(expr.value_of(f) == 4);
+}
+void test_expr_calc_relational()
 {
     symbol_table s;
     expr_calc expr(s);
@@ -37,8 +66,7 @@ void test_expr_calc1()
     //std::cout<<expr.value_of(f);
     assert(expr.value_of(f) == 1);
 }
-
-void test_expr_calc2()
+void test_expr_calc_variable()
 {
     symbol_table s;
     s.add("a");
@@ -49,12 +77,19 @@ void test_expr_calc2()
     code_fragment f(str);
     //std::cout<<expr.value_of(f);
     assert(expr.value_of(f) == 83);
+    str = "++a +12;";
+    f=str;
+    //std::cout<<expr.value_of(f);
+    assert(expr.value_of(f) == 18);
 }
 void test_expr_calc()
 {
-    test_expr_calc0();
-    test_expr_calc1();
-    test_expr_calc2();
+    test_expr_calc_comma();
+    test_expr_calc_assignment();
+    test_expr_calc_arithmetic();
+    test_expr_calc_association();
+    test_expr_calc_relational();
+    test_expr_calc_variable();
 }
 void test_all()
 {

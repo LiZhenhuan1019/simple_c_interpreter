@@ -29,9 +29,21 @@ public:
     }
     int value_of(code_fragment& code)
     {
-        return rvalue_assignment(code);
+        return comma(code);
     }
 private:
+    int comma(code_fragment& code)
+    {
+        int left = rvalue_assignment(code);
+        code_fragment comma_fragment(code);
+        if(skipping_space_get_current_and_eat(comma_fragment) == ',')
+        {
+            code = comma_fragment;
+            return comma(code);
+        }
+        else
+            return left;
+    }
     int rvalue_assignment(code_fragment& code)
     {
         if (auto lvalue = lvalue_assignment(code)) //declaration as condition: test if lvalue is non-zero
@@ -43,9 +55,10 @@ private:
     }
     optional<var_id> lvalue_assignment(code_fragment& code)
     {
-        code_fragment& assignment_fragment(code);
-        auto lvalue = lvalue_prefix(assignment_fragment);
+        code_fragment assignment_fragment(code);
+        auto lvalue = lvalue_var(assignment_fragment);//can be safely discarded.
         if (lvalue)
+        {
             if (skipping_space_get_current_and_eat(assignment_fragment) == '=')
             {
                 if (assignment_fragment.current() != '=') //if it is not equality operator
@@ -56,11 +69,16 @@ private:
                     return lvalue;
                 }
             }
+        }
         return nullopt;
     }
     int relational(code_fragment& code)
     {
         int left = term(code);
+        return right_relational(left,code);
+    }
+    int right_relational(int left_value,code_fragment&code)
+    {
         code_fragment relational_fragment(code);
         auto opt = relational_op_type(relational_fragment);
         if (opt)
@@ -71,45 +89,55 @@ private:
             switch (op_type)
             {
             case relational_op::equal:
-                return left == right;
+                return left_value == right;
             case relational_op::not_equal:
-                return left != right;
+                return left_value != right;
             case relational_op::less_or_equal:
-                return left <= right;
+                return left_value <= right;
             case relational_op::less:
-                return left < right;
+                return left_value < right;
             case relational_op::greater_or_equal:
-                return left >= right;
+                return left_value >= right;
             case relational_op::greater:
-                return left > right;
+                return left_value > right;
+            default:
+                return 0;
             }
         }
         else
-            return left;
+            return left_value;
     }
     optional<relational_op> relational_op_type(code_fragment& code)
     {
         char c = skipping_space_get_current_and_eat(code);
         if (c == '=')
+        {
             if (code.current_and_eat() == '=')
                 return relational_op::equal;
             else
-                throw std::string("Interpret failed!Expect '==' operator.In ") + __func__;
+                throw std::invalid_argument(std::string("Interpret failed!Expect '==' operator.In ") + __func__);
+        }
         else if (c == '!')
+        {
             if (code.current_and_eat() == '=')
                 return relational_op::not_equal;
             else
-                throw std::string("Interpret failed!Expect '!=' operator.In ") + __func__;
+                throw std::invalid_argument(std::string("Interpret failed!Expect '!=' operator.In ") + __func__);
+        }
         else if (c == '<')
+        {
             if (code.current_and_eat() == '=')
                 return relational_op::less_or_equal;
             else
                 return relational_op::less;
+        }
         else if (c == '>')
+        {
             if (code.current_and_eat() == '=')
                 return relational_op::greater_or_equal;
             else
                 return relational_op::greater;
+        }
         return nullopt;
     }
     int term(code_fragment& code)
@@ -169,6 +197,7 @@ private:
         code_fragment prefix_fragment(code);
         char op = skipping_space_get_current_and_eat(prefix_fragment);
         if (op == '+')
+        {
             if (prefix_fragment.current_and_eat() == '+')
             {
                 code = prefix_fragment;
@@ -183,8 +212,10 @@ private:
                     throw std::invalid_argument(std::string("Interpret failed!'++' operator expects lvalue.In ") + __func__);
             }
             else
-                throw std::string("Interpret failed!Expect '++' operator.In ") + __func__;
+                throw std::invalid_argument(std::string("Interpret failed!Expect '++' operator.In ") + __func__);
+        }
         else if (op == '-')
+        {
             if (prefix_fragment.current_and_eat() == '-')
             {
                 code = prefix_fragment;
@@ -200,7 +231,16 @@ private:
             }
             else
                 throw std::invalid_argument(std::string("Interpret failed!Expect '--' operator.In ") + __func__);
-
+        }
+        else
+        {
+            auto var = lvalue_var(code);
+            if(var)
+            {
+                code = prefix_fragment;
+                return var;
+            }
+        }
         return nullopt;
     }
     int postfix(code_fragment& code)
@@ -300,7 +340,7 @@ private:
     }
     optional<std::string> read_identifier(code_fragment& code)
     {
-        code_fragment& id_fragment(code);
+        code_fragment id_fragment(code);
         skip_space(id_fragment);
         char c = id_fragment.current_and_eat();
         if (std::isalpha(c))
@@ -319,7 +359,7 @@ private:
     }
     optional<int> read_literal(code_fragment& code)
     {
-        code_fragment& literal_fragment(code);
+        code_fragment literal_fragment(code);
         skip_space(literal_fragment);
         char c = literal_fragment.current_and_eat();
         if (std::isdigit(c))
