@@ -11,6 +11,7 @@ class symbol_table
 public:
     void set(std::string name,int value);
     void remove(std::string name);
+    int value(std::string name);
 private:
     std::map<std::string,int> int_variables;
 };
