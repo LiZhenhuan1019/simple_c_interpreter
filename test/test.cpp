@@ -38,10 +38,23 @@ void test_expr_calc1()
     assert(expr.value_of(f) == 1);
 }
 
+void test_expr_calc2()
+{
+    symbol_table s;
+    s.add("a");
+    s.set("a",5);
+
+    expr_calc expr(s);
+    std::string str("12 +13 - a +3* 21;");
+    code_fragment f(str);
+    //std::cout<<expr.value_of(f);
+    assert(expr.value_of(f) == 83);
+}
 void test_expr_calc()
 {
     test_expr_calc0();
     test_expr_calc1();
+    test_expr_calc2();
 }
 void test_all()
 {

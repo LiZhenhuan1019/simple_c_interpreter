@@ -41,6 +41,10 @@ public:
             (*iter).second.push_back(0);
         return iter;
     }
+    bool exists(std::string const& name) const
+    {
+        return int_variables.find(name) != int_variables.end();
+    }
     var_id get(std::string const& name)
     {
         return int_variables.find(name);
