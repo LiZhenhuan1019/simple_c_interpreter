@@ -19,14 +19,29 @@ void test_symbol_table()
     s.remove("a");
     assert(s.get("a").value() == 5);
 }
-void test_expr_calc()
+void test_expr_calc0()
 {
     symbol_table s;
     expr_calc expr(s);
-    std::string str("12 + 31+12 * 35 /5+ 21;");
+    std::string str("12+31+12*35/5+21;");
     code_fragment f(str);
     //std::cout<<expr.value_of(f);
     assert(expr.value_of(f) == 148);
+}
+void test_expr_calc1()
+{
+    symbol_table s;
+    expr_calc expr(s);
+    std::string str("12 +13> 21;");
+    code_fragment f(str);
+    //std::cout<<expr.value_of(f);
+    assert(expr.value_of(f) == 1);
+}
+
+void test_expr_calc()
+{
+    test_expr_calc0();
+    test_expr_calc1();
 }
 void test_all()
 {

@@ -163,7 +163,7 @@ private:
     {
         return lvalue_var(code);
     }
-    int postfix_incre(code_fragment& code)
+    int postfix(code_fragment& code)
     {
         return literal(code);
     }
