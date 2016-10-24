@@ -9,14 +9,14 @@ void test_symbol_table()
     symbol_table s;
     s.add("a");
     s.set("a",5);
-    assert(s.value("a") == 5);
+    assert(s.get("a").value() == 5);
 
     s.add("a");
     s.set("a",4);
-    assert(s.value("a") == 4);
+    assert(s.get("a").value() == 4);
 
     s.remove("a");
-    assert(s.value("a") == 5);
+    assert(s.get("a").value() == 5);
 }
 void test_expr_calc()
 {
