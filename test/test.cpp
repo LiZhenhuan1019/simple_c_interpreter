@@ -27,6 +27,7 @@ bool test_expr_calc()
     std::string expression;
     symbol_table table;
     table.add("a");
+    table.add("underscore_id");
     while (test_cases.good())
     {
         while (test_cases.good() && test_cases.peek() == '#')

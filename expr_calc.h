@@ -342,11 +342,11 @@ private:
         code_fragment id_fragment(code);
         skip_space(id_fragment);
         char c = id_fragment.current_and_eat();
-        if (std::isalpha(c))
+        if (std::isalpha(c) || c == '_')
         {
             std::string name;
             name.push_back(c);
-            while (c = id_fragment.current(), std::isalnum(c))
+            while (c = id_fragment.current(), std::isalnum(c) || c =='_')
             {
                 id_fragment.eat();
                 name.push_back(c);
