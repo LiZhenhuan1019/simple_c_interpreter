@@ -306,7 +306,11 @@ private:
     }
     optional<int> literal(code_fragment& code)
     {
-        return read_literal(code).value();
+         auto lit = read_literal(code);
+        if(lit)
+            return lit.value();
+        else
+            return nullopt;
     }
 
     bool is_space(char c)
