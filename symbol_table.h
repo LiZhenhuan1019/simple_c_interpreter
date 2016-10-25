@@ -9,11 +9,15 @@
 #include <string>
 class var_id
 {
+    friend class symbol_table;
 public:
     using iterator_t = std::map<std::string,std::vector<int>>::iterator;
+private:
     var_id(iterator_t iter)
         : iterator(iter)
     {}
+public:
+    var_id(var_id const&) = default;
     std::string const& name() const
     {
         return (*iterator).first;
@@ -59,7 +63,11 @@ public:
     }
     void remove(std::string const&name)
     {
-        auto iter = int_variables.find(name);
+        remove(get(name));
+    }
+    void remove(var_id id)
+    {
+        auto iter = id.iterator;
         if (iter != int_variables.end())
         {
             if ((*iter).second.size() > 1)

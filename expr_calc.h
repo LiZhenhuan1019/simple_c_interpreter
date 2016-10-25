@@ -232,15 +232,6 @@ private:
             else
                 throw std::invalid_argument(std::string("Interpret failed!Expect '--' operator.In ") + __func__);
         }
-        else
-        {
-            auto var = lvalue_var(code);
-            if(var)
-            {
-                code = prefix_fragment;
-                return var;
-            }
-        }
         return nullopt;
     }
     int postfix(code_fragment& code)

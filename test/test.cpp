@@ -81,6 +81,10 @@ void test_expr_calc_variable()
     f=str;
     //std::cout<<expr.value_of(f);
     assert(expr.value_of(f) == 18);
+
+    str = "a++ + 23;";
+    f =str;
+    assert(expr.value_of(f) == 29);
 }
 void test_expr_calc()
 {
