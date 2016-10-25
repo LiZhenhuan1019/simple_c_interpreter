@@ -7,13 +7,17 @@
 
 #include "code_fragment.h"
 #include "symbol_table.h"
-#include <experimental/optional>
 #include <stdexcept>
+#ifdef STD_OPTIONAL
+#include <experimental/optional>
+using std::experimental::optional;
+using std::experimental::nullopt;
+#else
+#include "optional/my_optional.h"
+#endif
 
 class symbol_table;
 
-using std::experimental::optional;
-using std::experimental::nullopt;
 
 class expr_calc
 {

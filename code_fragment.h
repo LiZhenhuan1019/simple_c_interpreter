@@ -6,6 +6,7 @@
 #define SIMPLE_C_INTERPRETER_CODE_FRAGMENT_H
 
 #include <string>
+#include <functional>
 class code_fragment
 {
 public:
@@ -17,12 +18,13 @@ public:
     {}
     code_fragment& operator=(code_fragment const& lhs)
     {
+        code = lhs.code;
         begin_index_ = lhs.begin_index_;
         return *this;
     }
     char current() const
     {
-        return code[begin_index_];
+        return code.get()[begin_index_];
     }
     char current_and_eat()
     {
@@ -32,14 +34,14 @@ public:
     }
     char operator[](std::size_t pos) const
     {
-        return code[begin_index_ + pos];
+        return code.get()[begin_index_ + pos];
     }
     void eat()
     {
         begin_index_++;
     }
 private:
-    std::string const& code;
+    std::reference_wrapper<const std::string> code;
     std::size_t begin_index_;
 };
 
