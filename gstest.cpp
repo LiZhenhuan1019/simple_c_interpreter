@@ -15,13 +15,20 @@ int main()
     freopen("in.txt","r",stdin);
     int n=0;
     while((inp[n++]=(char)getchar())!=-1);
-
+    printf("%s\n==END==\n",inp);
+    freopen("out.txt","w",stdout);
     Simulator sim;
     sim.bind(string(inp));
     //vector<int> outs;
     //sim.runSimulation(outs);
 
-    while(true);
+    //while(true);
+
+
+
+
+
+
 
     return 0;
 }
