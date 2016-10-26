@@ -66,7 +66,7 @@ bool test_expr_calc()
 void test_all()
 {
     bool success = true;
-    test_preprocessor();
+    //test_preprocessor();
     test_symbol_table();
     success = success && test_expr_calc();
     if (success)
