@@ -1,5 +1,5 @@
 #test comma
-26 35,12,31+12*35,5+21;
+26 35+ 4,12 + ++a,31+12*35,5+21;
 #test assignment
 10 a=5,a+5;
 #test arithmetic
@@ -8,10 +8,20 @@
 4 60/3/5;
 2 32-20-10;
 #test relational
-1 12 +13> 21;
+1 12 +13> 21 + 2;
+5 a=5
+12 underscore_id = 12
+1 ++a +7 > underscore_id
 #test vairable
 5 a=5;
-83 12 +13 - a +3* 21;
+87 12 +13 - a +3* 21 + 4;
 18 ++a +12;
-6 a=6;
+6 a;
 34 5+a++ +23;
+7 a;
+10 underscore_id = 10;
+13 ++underscore_id +2;
+#test empty expression
+0 ;
+0 )
+0 ,

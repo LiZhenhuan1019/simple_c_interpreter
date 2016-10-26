@@ -16,8 +16,6 @@ using std::experimental::nullopt;
 #include "optional/my_optional.h"
 #endif
 
-class symbol_table;
-
 
 class expr_calc
 {
@@ -26,13 +24,19 @@ class expr_calc
         equal, not_equal, less, less_or_equal, greater, greater_or_equal
     };
 public:
-    expr_calc(symbol_table& table)
-        : table_(table)
+    expr_calc(symbol_table& table,std::string const& code)//如果code的实参是temporary,构造的expr_calc也应是temporary
+        : table_(table),code_(code)
     {
 
     }
-    int value_of(code_fragment& code)
+    int value_of_initializer(size_t begin_pos = 0) //不解析',',不能为空表达式
     {
+        code_fragment code(code_,begin_pos);
+        return rvalue_assignment(code);
+    }
+    int value_of_expr(std::size_t begin_pos = 0) //可为空表达式
+    {
+        code_fragment code(code_,begin_pos);
         return comma(code);
     }
 private:
@@ -50,12 +54,20 @@ private:
     }
     int rvalue_assignment(code_fragment& code)
     {
+        if(empty_expr(code))
+            return 0;
         if (auto lvalue = lvalue_assignment(code)) //declaration as condition: test if lvalue is non-zero
         {
             return lvalue.value().value();
         }
         else
             return relational(code);
+    }
+    bool empty_expr(code_fragment& code)
+    {
+        code_fragment peek(code);
+        char current = skipping_space_get_current_and_eat(peek);
+        return !begin_legal_char(current);
     }
     optional<var_id> lvalue_assignment(code_fragment& code)
     {
@@ -333,20 +345,25 @@ private:
     char skipping_space_get_current_and_eat(code_fragment& code) //跳过空格,返回空格后的第一个字符,并再跳过一个字符.
     {
         skip_space(code);
-        char c = code.current();
-        code.eat();
-        return c;
+        return code.current_and_eat();
+    }
+    bool begin_id_char(char c)
+    {
+        return std::isalpha(c) || c == '_';
+    }
+    bool is_id_char(char c)
+    {
+        return std::isalnum(c) || c =='_';
     }
     optional<std::string> read_identifier(code_fragment& code)
     {
         code_fragment id_fragment(code);
-        skip_space(id_fragment);
-        char c = id_fragment.current_and_eat();
-        if (std::isalpha(c))
+        char c = skipping_space_get_current_and_eat(id_fragment);
+        if (begin_id_char(c))
         {
             std::string name;
             name.push_back(c);
-            while (c = id_fragment.current(), std::isalnum(c))
+            while (c = id_fragment.current(), is_id_char(c))
             {
                 id_fragment.eat();
                 name.push_back(c);
@@ -359,8 +376,7 @@ private:
     optional<int> read_literal(code_fragment& code)
     {
         code_fragment literal_fragment(code);
-        skip_space(literal_fragment);
-        char c = literal_fragment.current_and_eat();
+        char c = skipping_space_get_current_and_eat(literal_fragment);
         if (std::isdigit(c))
         {
             std::string digits;
@@ -375,7 +391,16 @@ private:
         }
         return nullopt;
     }
+    bool begin_op_char(char c)
+    {
+        return c == '+' || c == '-';
+    }
+    bool begin_legal_char(char c)
+    {
+        return is_space(c) || isdigit(c) || begin_id_char(c) || begin_op_char(c);
+    }
     symbol_table& table_;
+    std::string const& code_;
 };
 
 

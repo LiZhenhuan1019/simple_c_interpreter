@@ -23,10 +23,12 @@ void test_symbol_table()
 }
 bool test_expr_calc()
 {
+    bool success = true;
     std::ifstream test_cases("test/test_case/expr_calc.test_case");
     std::string expression;
     symbol_table table;
     table.add("a");
+    table.add("underscore_id");
     while (test_cases.good())
     {
         while (test_cases.good() && test_cases.peek() == '#')
@@ -34,21 +36,21 @@ bool test_expr_calc()
         int expected = -1;
         test_cases >> expected;
         std::getline(test_cases, expression);
-        if (test_cases.good())
+        if (!test_cases.eof())
         {
+
             //std::cout << "expected:" << expected << " expression:" << expression << std::endl;
-            expr_calc calculator(table);
-            code_fragment f(expression);
-            int result = calculator.value_of(f);
+            expr_calc calculator(table,expression);
+            int result = calculator.value_of_expr();
             if (result != expected)
             {
                 std::cout << std::string("计算错误!\n表达式:") + expression + "\n预期结果:" +
-                             std::to_string(expected) + "\n实际结果:" + std::to_string(result);
-                return false;
+                             std::to_string(expected) + "\n实际结果:" + std::to_string(result) + "\n";
+                success = false;
             }
         }
     }
-    return true;
+    return success;
 }
 void test_all()
 {
@@ -57,4 +59,6 @@ void test_all()
     success = success && test_expr_calc();
     if (success)
         std::cout << "Succes!" << std::endl;
+    else
+        std::cout << "Failed!" << std::endl;
 }
