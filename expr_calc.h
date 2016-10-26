@@ -29,15 +29,15 @@ public:
     {
 
     }
-    int value_of_initializer(size_t begin_pos = 0) //不解析',',不能为空表达式
-    {
-        code_fragment code(code_,begin_pos);
-        return rvalue_assignment(code);
-    }
     int value_of_expr(std::size_t begin_pos = 0) //可为空表达式
     {
         code_fragment code(code_,begin_pos);
         return comma(code);
+    }
+    int value_of_initializer(std::size_t begin_pos = 0) //不解析',',不能为空表达式
+    {
+        code_fragment code(code_,begin_pos);
+        return rvalue_assignment(code);
     }
 private:
     int comma(code_fragment& code)
@@ -142,15 +142,21 @@ private:
         }
         else if (c == '<')
         {
-            if (code.current_and_eat() == '=')
+            if (code.current() == '=')
+            {
+                code.eat();
                 return relational_op::less_or_equal;
+            }
             else
                 return relational_op::less;
         }
         else if (c == '>')
         {
-            if (code.current_and_eat() == '=')
+            if (code.current() == '=')
+            {
+                code.eat();
                 return relational_op::greater_or_equal;
+            }
             else
                 return relational_op::greater;
         }
