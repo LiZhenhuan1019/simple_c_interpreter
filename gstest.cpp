@@ -5,21 +5,23 @@
 #include <iostream>
 #include <fstream>
 #include <cstdio>
+#include <vector>
 using namespace std;
+
+char inp[505000]; //inited by 0.
 
 int main()
 {
     freopen("in.txt","r",stdin);
-    string inp;
-    char c;
-    while((c=getchar())!=-1)
-    inp.append(1,c);
-
-    vector<int> outs;
+    int n=0;
+    while((inp[n++]=(char)getchar())!=-1);
 
     Simulator sim;
-    sim.bind(inp);
-    sim.runSimulation(outs);
+    sim.bind(string(inp));
+    //vector<int> outs;
+    //sim.runSimulation(outs);
+
+    while(true);
 
     return 0;
 }

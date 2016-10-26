@@ -15,6 +15,7 @@ using namespace std;
 #define DK_COMPILER_CODE_SIMULATOR_HXX
 
 /**
+ * Code Simulator
  * @UNFINISHED
  * @usage use bind() to bind Simulator with comment-free source code text.
  *        then use run() to run the simulation.
@@ -27,7 +28,9 @@ public:
     Simulator(){}
     void bind(string);
     void runSimulation(vector<int>&);
-    
+
+//private:
+
     class Block
     {
     public:
@@ -57,11 +60,10 @@ public:
         {
 #ifdef DK_TEST_TAG_DONOT_CALCULATE
             cout<<"calculation run!"<<endl;
-            return -1;
+            return 0;
 #else
             expr_calc calcupator(variables);
-            code_fragment cc(expression);
-            return calcupator.value_of(cc);
+            return calcupator.value_of(expression);
 #endif
         }
 
@@ -135,20 +137,21 @@ public:
         Block(BlockType t,int ld):type(t),lineIndex(ld){ }
     };
 
-    
-private:
+
     Block Main;
     stack<pair<string,int>> hiddenVars;
     symbol_table curVars;
     string code;
-    int ci;
-    int linenum;
+    int ci;  //index of code in current reading.
+    int lci; //the beginning point of last ci operation.
+    int linenum; //line number in current reading.
 
     void advance();
     void pass();
     string getword();
     char getsymbol();
     string getInParen();
+    void back();
 
     bool eos();
 
@@ -175,25 +178,26 @@ private:
  * @param codeCache
  *
  */
-void Simulator::bind(string codeCache)
+inline void Simulator::bind(string codeCache)
 {
     code=codeCache;
     linenum=1;
     ci=0;
+    Main.type=Block::Jump;
     build_main();
 }
 
 /**
  * @name run
  */
-void Simulator::runSimulation(vector<int>&out)
+inline void Simulator::runSimulation(vector<int>&out)
 { Main.run(curVars,out); }
 
 /**
  * @name eos
  * @return if ci arrived the tail of the string.
  */
-bool Simulator::eos()
+inline bool Simulator::eos()
 { return ci==(int)code.size(); }
 
 
@@ -212,21 +216,25 @@ bool Simulator::eos()
  *       let ci go on one character.
  *       adjust line number.
  */
-void Simulator::advance()
+inline void Simulator::advance()
 {
     if(eos()) return;
+    lci=ci;
     if(code[ci]=='\n') linenum++;
     ci++;
 }
-
 
 /**
  * @name pass
  *       let ci go across spaces and tabs.
  */
-void Simulator::pass()
-{ while(!eos() && (code[ci]==' ' || code[ci]=='\r' || code[ci]=='\n' || code[ci]=='\t')) advance(); }
-
+inline void Simulator::pass()
+{
+    lci=ci;
+    while(  !eos() &&
+            (code[ci]==' ' || code[ci]=='\r' || code[ci]=='\n' || code[ci]=='\t'))
+        advance();
+}
 
 /**
  * @name getword
@@ -235,19 +243,20 @@ void Simulator::pass()
  *      ci will advance as possible if failed.
  * @return the string this function got. Empty if failed.
  * @attention Character space ' ' will NOT terminate reading.
- *            Character '{' is considered as word. Not the same as '}'.
+ *            Character '{' is considered as a word. Not the same as '}'.
  *            This function will read:
  *                 letter 'a'~'z','A'~'Z'
  *                 character '{' '_'
  */
-string Simulator::getword()
+inline string Simulator::getword()
 {
     string t("");
     pass();
+    lci=ci;
     while(  !eos() && (
             (code[ci]>='a' && code[ci]<='z') ||
             (code[ci]>='A' && code[ci]<='Z') ||
-            code[ci]=='{') )
+            code[ci]=='{' || code[ci]=='_') )
     {
         t.append(1,code[ci]);
         advance();
@@ -256,13 +265,21 @@ string Simulator::getword()
 }
 
 /**
+ * @name back
+ *  undo the ci moving.
+ */
+inline void Simulator::back()
+{ ci=lci; }
+
+/**
  * @name getsymbol
  *      let ci stand on the right of next symbol.
  *      ci will advance as possible if failed;
  *      Character space ' ' will NOT terminate advancing.
+ * @process ends with having read the next symbol.
  * @return the symbol got. -1 if failed.
  */
-char Simulator::getsymbol()
+inline char Simulator::getsymbol()
 {
     char t=-1;
     pass();
@@ -284,9 +301,10 @@ char Simulator::getsymbol()
   *     let ci stand on the right of tail of *parenthesis*.
   *     ci will be as before if failed.
   *     the left paren '(' is thrown before call.
+  * @process ends with ')'
   * @return the string included by parenthese. empty if failed.
  */
-string Simulator::getInParen()
+inline string Simulator::getInParen()
 {
     string t("");
     pass();
@@ -303,30 +321,38 @@ string Simulator::getInParen()
  * @name build_next
  * @return a new block alongside with next code block or line.
  */
-Simulator::Block* Simulator::build_next()
+inline Simulator::Block* Simulator::build_next()
 {
+    printf("create new block:\n");
     string token=getword();
-    if(token.compare("int")==0)         return build_declarations();
-    else if(token.compare("if")==0)     return build_if();
-    else if(token.compare("{")==0)      return build_block();
-    else if(token.compare("for")==0)    return build_for();
-    else if(token.compare("do")==0)     return build_dowhile();
-    else if(token.compare("while")==0)  return build_while();
-    else if(token.compare("printf")==0) return build_printf();
-    else if(token.compare("")==0)       return build_empty();
-    else if(token.compare("break")==0) return build_break();
-    else return build_expression();
+    Block*t;
+    if(token.compare("int")==0)         t=build_declarations();
+    else if(token.compare("if")==0)     t=build_if();
+    else if(token.compare("{")==0)      t=build_block();
+    else if(token.compare("for")==0)    t=build_for();
+    else if(token.compare("do")==0)     t=build_dowhile();
+    else if(token.compare("while")==0)  t=build_while();
+    else if(token.compare("printf")==0) t=build_printf();
+    else if(token.compare("")==0)       t=build_empty();
+    else if(token.compare("break")==0)  t=build_break();
+    else
+    {
+        back();
+        t=build_expression();
+    }
+    return t;
 }
 
 /**
  * @name build_empty
  * @return a do-nothing block.
+ * @process ends with ';'
  */
-Simulator::Block* Simulator::build_empty()
+inline Simulator::Block* Simulator::build_empty()
 {
     Block*t=new Block(Block::Empty,linenum);
     t->expression=string("");
-    getsymbol(); //read ';'
+    getsymbol(); //skip ';'
     return t;
 }
 
@@ -335,8 +361,9 @@ Simulator::Block* Simulator::build_empty()
  * @return a block builded following of expression grammer.
  * @attention comma will not appear in this expression.
  *          also, comma will terminate expression building.
+ * @process ends with the last character of expression.
  */
-Simulator::Block* Simulator::build_expression_nocomma()
+inline Simulator::Block* Simulator::build_expression_nocomma()
 {
     Block* t=new Block(Block::Calculation,linenum);
     string e("");
@@ -351,9 +378,10 @@ Simulator::Block* Simulator::build_expression_nocomma()
 
 /**
  * @name build_expression
-* @return a block builded following of expression grammer.
+ * @return a block builded following of expression grammer.
+ * @process ends with the last character of expression.
 */
-Simulator::Block* Simulator::build_expression()
+inline Simulator::Block* Simulator::build_expression()
 {
     Block* t=new Block(Block::Calculation,linenum);
     string e("");
@@ -372,8 +400,9 @@ Simulator::Block* Simulator::build_expression()
  * @return a block builded by {...;...;} etc.
  * @attention character '{' and '}' are considered as keywords.
  *          character '{' is thrown before call.
+ * @process ends with '}'
  */
-Simulator::Block* Simulator::build_block()
+inline Simulator::Block* Simulator::build_block()
 {
     Block* t=new Block(Block::Jump,linenum);
     //expression field in *t is not used.
@@ -387,7 +416,7 @@ Simulator::Block* Simulator::build_block()
  * @return a block builded following  if() ...; else ...;
  * @attention word "if" is thrown befor call.
  */
-Simulator::Block* Simulator::build_if()
+inline Simulator::Block* Simulator::build_if()
 {    
     Block* t=new Block(Block::If,linenum);
     string exp=getInParen();
@@ -408,12 +437,14 @@ Simulator::Block* Simulator::build_if()
  * @name build_declareations
  * @return a block builded following the  int ..., ... = ...; and etc.
  * @attention word "int" is thrown before call.
+ * @process ends with ';'
  */
-Simulator::Block* Simulator::build_declarations()
+inline Simulator::Block* Simulator::build_declarations()
 {
     Block* t=new Block(Block::Jump,linenum);
-    do
+    while(true)
     {
+        printf("add one declaration:\n");
         int orci=ci;
         t->subBlocks.push_back(build_declaration_single()); //Declaration only!
         char c=getsymbol();
@@ -422,20 +453,21 @@ Simulator::Block* Simulator::build_declarations()
             ci=orci;
             t->subBlocks.push_back(build_expression_nocomma());
         }
+        else if(c==';') break;
+        if(getsymbol()==';' || eos()) break;//otherwise ',' definately not '='.
     }
-    while(getsymbol()!=';'); //otherwise ',' definately not '='.
     return t;
 }
 
     
 /**
  * @name build_declareation_single
+ *       a sub-function of build_declaration.
  * @return a block declaring a variable.
- * @description a sub-function of build_declaration.
  * @attention Declaration ONLY! another assignment function should be placed.
  *            Following the  "... = ... ," or single "...,".
  */
-Simulator::Block* Simulator::build_declaration_single()
+inline Simulator::Block* Simulator::build_declaration_single()
 {
     string w=getword();
     Block*t=new Block(Block::Declaration,linenum);
@@ -449,16 +481,16 @@ Simulator::Block* Simulator::build_declaration_single()
  * @attention folling grammer "for( ... ; ... ; ...[,...] ) ..."
  *            word 'for' is thrown before call.
  */
-Simulator::Block* Simulator::build_for()
+inline Simulator::Block* Simulator::build_for()
 {
     Block*t=new Block(Block::For,linenum);
-    getsymbol(); //read '('
+    getsymbol(); //skip '('
     t->subBlocks.push_back(build_expression());
-    getsymbol(); //read the first ';'
+    getsymbol(); //skip the first ';'
     t->subBlocks.push_back(build_expression());
-    getsymbol(); //read the second ';'
+    getsymbol(); //skip the second ';'
     t->subBlocks.push_back(build_expression());
-    getsymbol(); //read ')'
+    getsymbol(); //skip ')'
     t->subBlocks.push_back(build_next());
     return t;
 }
@@ -469,7 +501,7 @@ Simulator::Block* Simulator::build_for()
  * @attention folling grammer "while(...) ...;"
  *            word "while" is thrown before call.
  */
-Simulator::Block* Simulator::build_while()
+inline Simulator::Block* Simulator::build_while()
 {
     Block*t=new Block(Block::While,linenum);
     getsymbol(); //read '('
@@ -483,14 +515,16 @@ Simulator::Block* Simulator::build_while()
  * @return a block of For loop.
  * @attention folling grammer "while(...) ...;"
  *            word "do" is thrown before call.
+ * @process ends with ';'
  */
-Simulator::Block* Simulator::build_dowhile()
+inline Simulator::Block* Simulator::build_dowhile()
 {
     Block*t=new Block(Block::DoWhile,linenum);
     t->subBlocks.push_back(build_next());
-    getword(); //read "while"
-    getsymbol(); //read '('
+    getword(); //skip "while"
+    getsymbol(); //skip '('
     t->expression=getInParen();
+    getsymbol(); //skip ';'
     return t;
 }
 
@@ -499,11 +533,12 @@ Simulator::Block* Simulator::build_dowhile()
  * @return a block for printf function.
  * @attention following grammer printf("..." "..." "...", ..., ..., ...);
  *            word "printf" is thrown before call.
+ * @process ends with ';'
  */
-Simulator::Block* Simulator::build_printf()
+inline Simulator::Block* Simulator::build_printf()
 {
     Block*t=new Block(Block::Jump,linenum);
-    getsymbol(); //read '('
+    getsymbol(); //skip '('
     bool tag=0;
     while(true)
     {
@@ -512,8 +547,8 @@ Simulator::Block* Simulator::build_printf()
     }
     getsymbol(); //read ',' right on the right of const char array(arrays).
     t->subBlocks.push_back(build_expression());
-    getsymbol(); //read ')'
-    getsymbol(); //read ';'
+    getsymbol(); //skip ')'
+    getsymbol(); //skip ';'
     return t;
 }
 
@@ -521,20 +556,24 @@ Simulator::Block* Simulator::build_printf()
  * @name build_break
  * this function will forcely terminate current block.
  * @attention will functionally applied by it's father function in run().
+ * @procession ends with ';'
  */
-Simulator::Block* Simulator::build_break()
+inline Simulator::Block* Simulator::build_break()
 {
     Block*t=new Block(Block::Break,linenum);
+    advance(); //skip ';'
     return t;
 }
 
 /**
  * @name build_main
  * build the main funtion as a block.
+ * @process ends with '}'
  */
-Simulator::Block& Simulator::build_main()
+inline Simulator::Block& Simulator::build_main()
 {
-    while(ci!=(int)code.size()) Main.subBlocks.push_back(build_next());
+    while(!eos())
+        Main.subBlocks.push_back(build_next());
     return Main;
 }
 
