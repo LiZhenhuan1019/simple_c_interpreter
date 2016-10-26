@@ -25,3 +25,7 @@
 0 ;
 0 )
 0 ,
+#documentation test
+5 a = 5;
+7 underscore_id = 7;
+1 ++a +10/2 > --underscore_id + 4;

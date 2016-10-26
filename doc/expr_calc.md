@@ -63,18 +63,18 @@ member type    |definition
 
 ##### 对optional的使用
 * 解析失败的标记由optional负责.下面是cppreference上对std::optional的部分介绍
-> The class template std::optional manages an optional contained value, i.e. a value that may or may not be present.
+> The class template `std::optional` manages an optional contained value, i.e. a value that may or may not be present.
 >
-> A common use case for optional is the return value of a function that may fail. As opposed to other approaches, such as std::pair<T,bool>, optional handles expensive-to-construct objects well and is more readable, as the intent is expressed explicitly.
+> A common use case for optional is the return value of a function that may fail. As opposed to other approaches, such as `std::pair<T,bool>`, optional handles expensive-to-construct objects well and is more readable, as the intent is expressed explicitly.
 >
->Any instance of optional<T> at any given point in time either contains a value or does not contain a value.
+>Any instance of `optional<T>` at any given point in time either contains a value or does not contain a value.
 >
->If an optional<T> contains a value, the value is guaranteed to be allocated as part of the optional object footprint, i.e. **no dynamic memory allocation** ever takes place. Thus, an optional object models an object, not a pointer, even though the operator*() and operator->() are defined.
+>If an `optional<T>` contains a value, the value is guaranteed to be allocated as part of the optional object footprint, i.e. **no dynamic memory allocation** ever takes place. Thus, an optional object models an object, not a pointer, even though the `operator*()` and `operator->()` are defined.
 
-鉴于optional的表达力,易用性及高效性,我决定选用optional.但由于std::optional是C++17的内容,部分编译器可能不支持,于是我在optional/my_optional.h中用std::unique_ptr写了一个简化和低效的optional.如果编译器支持且要使用高效的std::optional,在编译时定义宏STD_OPTIONAL.
+鉴于`optional`的表达力,易用性及高效性,我决定选用`optional`.但由于`std::optional`是`C++17`的内容,部分编译器可能不支持,于是我在`optional/my_optional.h`中用`std::unique_ptr`写了一个简化和低效的`optional`.如果编译器支持且要使用高效的`std::optional`,请在编译时定义宏`STD_OPTIONAL`.
 
 对于`optional`和`code_fragment`有一点总是被保证:
-若调用一个解析表达式的函数后返回的optional的值为nullopt(表示解析失败),那么传给它的code_fragment的状态与调用前的状态相同.(而若解析成功,传给它的code_fragment的状态通常要改变)
+若调用一个解析表达式的函数后返回的optional的值为`nullopt`(表示解析失败),那么传给它的`code_fragment`的状态与调用前的状态相同.(而若解析成功,传给它的`code_fragment`的状态通常要改变)
 ##### lvalue 和 rvalue
 表达式被分为两类,lvalue和rvalue.
 
@@ -112,4 +112,4 @@ right_term(left_value)
     else return left_value
 }
 ```
-代码中的expr_calc::term/factor和expr_calc::right_term/factor几乎是上述伪代码的直接反映
+代码中的expr_calc::term/factor和expr_calc::right_term/right_factor几乎是上述伪代码的直接反映
