@@ -39,7 +39,7 @@ bool test_expr_calc()
         if (!test_cases.eof())
         {
 
-            std::cout << "expected:" << expected << " expression:" << expression << std::endl;
+            //std::cout << "expected:" << expected << " expression:" << expression << std::endl;
             expr_calc calculator(table,expression);
             int result = calculator.value_of_expr();
             if (result != expected)
@@ -59,4 +59,6 @@ void test_all()
     success = success && test_expr_calc();
     if (success)
         std::cout << "Succes!" << std::endl;
+    else
+        std::cout << "Failed!" << std::endl;
 }

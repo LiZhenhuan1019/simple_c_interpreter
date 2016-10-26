@@ -16,10 +16,8 @@ using std::experimental::nullopt;
 #include "optional/my_optional.h"
 #endif
 
-class symbol_table;
 
-
-class expr_calc //TODO:支持空表达式,简化接口
+class expr_calc
 {
     enum class relational_op
     {
@@ -347,9 +345,7 @@ private:
     char skipping_space_get_current_and_eat(code_fragment& code) //跳过空格,返回空格后的第一个字符,并再跳过一个字符.
     {
         skip_space(code);
-        char c = code.current();
-        code.eat();
-        return c;
+        return code.current_and_eat();
     }
     bool begin_id_char(char c)
     {
@@ -362,8 +358,7 @@ private:
     optional<std::string> read_identifier(code_fragment& code)
     {
         code_fragment id_fragment(code);
-        skip_space(id_fragment);
-        char c = id_fragment.current_and_eat();
+        char c = skipping_space_get_current_and_eat(id_fragment);
         if (begin_id_char(c))
         {
             std::string name;
@@ -381,8 +376,7 @@ private:
     optional<int> read_literal(code_fragment& code)
     {
         code_fragment literal_fragment(code);
-        skip_space(literal_fragment);
-        char c = literal_fragment.current_and_eat();
+        char c = skipping_space_get_current_and_eat(literal_fragment);
         if (std::isdigit(c))
         {
             std::string digits;
