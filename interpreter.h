@@ -35,7 +35,7 @@ public:
         }
         std::cout<<"constructor end \n";
     }
-    char current()
+    char current() const
     {
         return codes[pos.line_num][pos.column_num];
     }
@@ -65,7 +65,8 @@ public:
             if(is_space())
                 eat();
             else if(is_comment())
-                skip_comment();
+//                skip_comment()
+                ;
             else
                 break;
     }
@@ -89,13 +90,16 @@ private:
     }
     bool is_space() const
     {
+        char c = current();
         return c == ' ' || c == '\n' || c == '\t';
     }
     bool is_comment()
     {
         auto pre_pos = current_pos();
         if(current_and_eat() == '/' && current() == '*')
-
+            ;
+        current_pos() = pre_pos;
+        return false;
     }
     void confirm_reach_end()
     {

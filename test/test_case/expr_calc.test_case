@@ -10,6 +10,7 @@
 #test relational
 1 12 +13> 21 + 2;
 5 a=5
+1 a < 12
 12 underscore_id = 12
 1 ++a +7 > underscore_id
 #test vairable

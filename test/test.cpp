@@ -42,7 +42,7 @@ bool test_expr_calc()
 
             expr_calc calculator(table,expression);
             int result = calculator.value_of_expr();
-            //std::cout << "expected:" << expected << " result:"<<result<<" expression:" << expression << std::endl;
+            std::cout << "expected:" << expected << " result:"<<result<<" expression:" << expression << std::endl;
             if (result != expected)
             {
                 std::cout << std::string("计算错误!\n表达式:") + expression + "\n预期结果:" +
