@@ -6,6 +6,7 @@
 #include <fstream>
 #include "../symbol_table.h"
 #include "../expr_calc.h"
+#include "../interpreter.h"
 
 void test_symbol_table()
 {
@@ -52,11 +53,29 @@ bool test_expr_calc()
     }
     return success;
 }
+void test_code_controller()
+{
+    std::string code = R"~(1
+2
+3
+4 this is a test text.
+5
+6
+)~";
+    code_controller controller(code);
+    while(!controller.reach_end())
+        std::cout<<controller.current_and_eat();
+}
+void test_interpreter()
+{
+
+}
 void test_all()
 {
     bool success = true;
     test_symbol_table();
     success = success && test_expr_calc();
+    //test_code_controller();
     if (success)
         std::cout << "Succes!" << std::endl;
     else
