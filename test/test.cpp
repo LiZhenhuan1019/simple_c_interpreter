@@ -6,7 +6,18 @@
 #include <fstream>
 #include "../symbol_table.h"
 #include "../expr_calc.h"
-
+#include "../preprocessor.h"
+void test_preprocessor()
+{
+    std::string str= R"~(
+/*comment1
+*/endcomment1//comment 2 /*still comment
+beginliteral"string literal"endliteral
+/*comment*/end
+)~";
+    preprocessor processor(str);
+    std::cout<<processor.processed_code();
+}
 void test_symbol_table()
 {
     symbol_table s;
@@ -55,6 +66,7 @@ bool test_expr_calc()
 void test_all()
 {
     bool success = true;
+    test_preprocessor();
     test_symbol_table();
     success = success && test_expr_calc();
     if (success)
