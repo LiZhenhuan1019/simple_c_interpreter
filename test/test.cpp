@@ -9,12 +9,12 @@
 #include "../preprocessor.h"
 void test_preprocessor()
 {
-    std::string str= R"~(
-/*comment1
-*/endcomment1//comment 2 /*still comment
-beginliteral"string literal"endliteral
-/*comment*/end
-)~";
+    std::string str= R"~(1
+2/*comment1
+*/3endcomment1//comment2 /*still comment
+4beginliteral"string literal"endliteral
+5/*comment*/end
+6)~";
     preprocessor processor(str);
     std::cout<<processor.processed_code();
 }
