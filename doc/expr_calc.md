@@ -17,7 +17,7 @@ member type    |definition
   使构造的对象绑定到符号表`table`.
 
 ### Expression evaluation
-* `int value_of(code_fragment& code)`
+* `int value_of_expr(code_fragment& code)`
 
   使用给定的代码片段`code`来解析并计算执行code中的第一个合法表达式,返回计算得到的结果.
 
