@@ -29,15 +29,15 @@ public:
     {
 
     }
-    int value_of_initializer(size_t begin_pos = 0) //不解析',',不能为空表达式
-    {
-        code_fragment code(code_,begin_pos);
-        return rvalue_assignment(code);
-    }
     int value_of_expr(std::size_t begin_pos = 0) //可为空表达式
     {
         code_fragment code(code_,begin_pos);
         return comma(code);
+    }
+    int value_of_initializer(std::size_t begin_pos = 0) //不解析',',不能为空表达式
+    {
+        code_fragment code(code_,begin_pos);
+        return rvalue_assignment(code);
     }
 private:
     int comma(code_fragment& code)

@@ -12,15 +12,17 @@ member type    |definition
 
 ## Member functions
 ### Constructor
-* `expr_calc(symbol_table& table)`
+* `expr_calc(symbol_table& table,std::string const& code)`
 
-  使构造的对象绑定到符号表`table`.
+  使构造的对象绑定到符号表`table`和存储代码的字符串`code`
 
 ### Expression evaluation
-* `int value_of_expr(code_fragment& code)`
+* `int value_of_expr(std::size_t begin_pos = 0)`
 
-  使用给定的代码片段`code`来解析并计算执行code中的第一个合法表达式,返回计算得到的结果.
+  从绑定的字符串的`begin_pos`位置开始解析并计算执行得到的合法表达式,返回计算得到的结果.
+* `int value_of_initializer(std::size_t begin_pos = 0)`
 
+  从绑定的字符串的`begin_pos`位置开始解析并计算执行得到的合法表达式,返回计算得到的结果.不解析逗号表达式(遇到逗号就停止).
 ### Implementation
 目前`expr_calc`使用*递归下降*算法来解析给出的代码,并立即计算表达式的值和执行副作用.
 #### syntax
