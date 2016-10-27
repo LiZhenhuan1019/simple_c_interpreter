@@ -1,4 +1,6 @@
-#`class code_fragment`
+[expr_calc]: expr_calc.md.html
+
+# `class code_fragment`
 ## 简介
 `code_fragment`是对一片待解析的代码的抽象.它包含一个包含代码的字符串的引用,以及一个字符串中下一个未解析的字符的下标.
 ## Member functions
@@ -25,7 +27,10 @@
 * `char operator[](std::size_t pos) const`
 
   返回绑定的字符串中 `起始下标+pos`对应的字符.
+
 ### Code consumer
 * `void eat()`
 
   使起始下标自增1.
+## See also
+* [`class expr_calc`][expr_calc]

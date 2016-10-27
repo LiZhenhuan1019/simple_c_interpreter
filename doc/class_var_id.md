@@ -1,3 +1,6 @@
+[class_symbol_table]:class_symbol_table.md.html
+[expr_calc]:expr_calc.md.html
+
 # `class var_id`
 ## 简介
 `var_id`用于标识一个变量,并封装对这个变量的读写操作.
@@ -26,4 +29,5 @@ member type |definition
   将标识的变量的值设置为`value`.
 
 ## See also
-* [`class symbol_table`](class_symbol_table.md.html)
+* [`class symbol_table`][class_symbol_table]
+* [`class expr_calc`][expr_calc]

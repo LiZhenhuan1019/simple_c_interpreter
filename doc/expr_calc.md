@@ -1,4 +1,5 @@
 [class_var_id]: class_var_id.md.html
+[code_fragment]: code_fragment.md.html
 
 # `class expr_calc`
 ## 简介
@@ -23,6 +24,7 @@ member type    |definition
 * `int value_of_initializer(std::size_t begin_pos = 0)`
 
   从绑定的字符串的`begin_pos`位置开始解析并计算执行得到的合法表达式,返回计算得到的结果.不解析逗号表达式(遇到逗号就停止).
+
 ### Implementation
 目前`expr_calc`使用*递归下降*算法来解析给出的代码,并立即计算表达式的值和执行副作用.
 #### syntax
@@ -77,6 +79,7 @@ member type    |definition
 
 对于`optional`和`code_fragment`有一点总是被保证:
 若调用一个解析表达式的函数后返回的optional的值为`nullopt`(表示解析失败),那么传给它的`code_fragment`的状态与调用前的状态相同.(而若解析成功,传给它的`code_fragment`的状态通常要改变)
+
 ##### lvalue 和 rvalue
 表达式被分为两类,lvalue和rvalue.
 
@@ -87,6 +90,7 @@ lvalue返回[`var_id`][class_var_id],标识变量本身,rvalue则直接返回值
 如,在赋值表达式中,lvalue_assignment尝试检测是否有赋值运算符,若有则解析赋值右侧的值(赋值运算符右侧也可以是赋值表达式,即可以连续赋值);若lvalue_assignment检测没有赋值运算符,则返回nullopt表示解析失败,即这里不应按赋值表达式的方式解析.
 
 rvalue_assignment调用调用lvalue_assignment后检查其返回值,若不为nullopt则说明解析成功,rvalue_assignment将左值转成右值(读取变量的值)并返回;若lvalue_assignment解析失败,则rvalue_assignment调用relational进行下一层解析.
+
 ##### 对左结合表达式的解析技巧
 原本`递归下降`算法只适合右结合的表达式,但这里关系运算符,算术运算符都是左结合的,不能直接用`递归下降`的方法进行解析.于是我使用了一些技巧:
 一个右结合的表达式term的解析过程通常用如下伪代码表示:
@@ -115,3 +119,6 @@ right_term(left_value)
 }
 ```
 代码中的expr_calc::term/factor和expr_calc::right_term/right_factor几乎是上述伪代码的直接反映
+## See also
+* [`class var_id`][class_var_id]
+* [`class code_fragment`][code_fragment]

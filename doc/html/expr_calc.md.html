@@ -2,7 +2,7 @@
 <html>
   <head>
       <meta charset="utf-8" />
-      <title>class_symbol_table</title>
+      <title>expr_calc</title>
       <style>.markdown-preview:not([data-use-github-style]) { padding: 2em; font-size: 1.2em; color: rgb(56, 58, 66); overflow: auto; background-color: rgb(250, 250, 250); }
 .markdown-preview:not([data-use-github-style]) > :first-child { margin-top: 0px; }
 .markdown-preview:not([data-use-github-style]) h1, .markdown-preview:not([data-use-github-style]) h2, .markdown-preview:not([data-use-github-style]) h3, .markdown-preview:not([data-use-github-style]) h4, .markdown-preview:not([data-use-github-style]) h5, .markdown-preview:not([data-use-github-style]) h6 { line-height: 1.2; margin-top: 1.5em; margin-bottom: 0.5em; color: rgb(0, 0, 0); }
@@ -499,43 +499,125 @@ pre.editor-colors .fold-marker:after,
 }
 </style>
   </head>
-  <body class='markdown-preview' data-use-github-style><h1 id="-class-symbol_table-"><code>class symbol_table</code></h1>
+  <body class='markdown-preview' data-use-github-style><h1 id="-class-expr_calc-"><code>class expr_calc</code></h1>
 <h2 id="-">简介</h2>
-<p><code>symbol_table</code>作为符号表的抽象,拥有添加,删除,读写变量的功能.</p>
-<p>它可以对同一个变量同时存储多个值,但只读写最近添加的那一个值,以实现<code>name hiding</code>.</p>
+<p><code>expr_calc</code>用于计算表达式的值,并执行表达式中的副作用(如修改变量的值).它能计算出下面的Implementation.syntax中的文法所指定的任何表达式(变量名与字面量的文法未指出,但在题目中有规定).</p>
+<p><code>expr_calc</code>绑定一个符号表,用于在计算表达式和执行副作用时读写变量信息.</p>
+<h2 id="member-types">Member types</h2>
+<table>
+<thead>
+<tr>
+<th>member type</th>
+<th>definition</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>relational_op</code></td>
+<td><code>enum class</code>,表示关系运算符的种类.</td>
+</tr>
+</tbody>
+</table>
 <h2 id="member-functions">Member functions</h2>
-<h3 id="variable-management">Variable management</h3>
+<h3 id="constructor">Constructor</h3>
 <ul>
-<li><p><a href="class_var_id.md.html"><code>var_id</code></a><code>add (std::string const&amp; name)</code></p>
-<p>向符号表中添加名为<code>name</code>的变量.变量的初始值为0(但不保证以后不会把变量初始值修改为unspecific).</p>
-<p>如果符号表中已有同名变量,则原有变量变为hiden变量,新的变量被称为可见变量,该名称(<code>name</code>)被称为多值名称,该变量被称为多值变量.后续所有读写操作均针对可见变量进行.</p>
+<li><p><code>expr_calc(symbol_table&amp; table,std::string const&amp; code)</code></p>
+<p>使构造的对象绑定到符号表<code>table</code>和存储代码的字符串<code>code</code></p>
 </li>
-<li><p>1). <code>void remove(std::string const&amp;name)</code></p>
-<p>2). <code>void remove(</code><a href="class_var_id.md.html"><code>var_id</code></a><code>id)</code></p>
+</ul>
+<h3 id="expression-evaluation">Expression evaluation</h3>
+<ul>
+<li><p><code>int value_of_expr(std::size_t begin_pos = 0)</code></p>
+<p>从绑定的字符串的<code>begin_pos</code>位置开始解析并计算执行得到的合法表达式,返回计算得到的结果.</p>
+</li>
+<li><p><code>int value_of_initializer(std::size_t begin_pos = 0)</code></p>
+<p>从绑定的字符串的<code>begin_pos</code>位置开始解析并计算执行得到的合法表达式,返回计算得到的结果.不解析逗号表达式(遇到逗号就停止).</p>
+</li>
+</ul>
+<h3 id="implementation">Implementation</h3>
+<p>目前<code>expr_calc</code>使用<em>递归下降</em>算法来解析给出的代码,并立即计算表达式的值和执行副作用.</p>
+<h4 id="syntax">syntax</h4>
+<p>表达式一共分为以下几层:</p>
 <ol>
-<li>从符号表中移除名为<code>name</code>的变量.若<code>name</code>为多值名称,则只有名为<code>name</code>的可见变量被移除,其对应的hiden变量变为可见变量.</li>
-<li>从符号表中移除<code>id</code>指定的变量.若<code>id</code>标识的变量为多值变量,则只有<code>id</code>标识的可见变量被移除,该可见变量对应的hiden变量变为可见变量.</li>
+<li>comma 逗号表达式 右结合<ul>
+<li>assignment , comma</li>
+<li>assignment</li>
+</ul>
+</li>
+<li>assignment 赋值表达式 右结合<ul>
+<li>var = assignment</li>
+<li>relational</li>
+</ul>
+</li>
+<li>relational 关系表达式 左结合<ul>
+<li>relational relational_op term 其中relational_op是任意一个关系运算符(==,!=,&lt;,&lt;=,&gt;,&gt;=)</li>
+<li>term</li>
+</ul>
+</li>
+<li>term + -表达式 左结合<ul>
+<li>term + factor</li>
+<li>term - factor</li>
+<li>factor</li>
+</ul>
+</li>
+<li>factor * /表达式 左结合<ul>
+<li>factor * prefix</li>
+<li>factor / prefix</li>
+<li>prefix</li>
+</ul>
+</li>
+<li>prefix 前缀自增/自减表达式 右结合<ul>
+<li>++ var</li>
+<li>-- var</li>
+<li>postfix</li>
+</ul>
+</li>
+<li>postfix 后缀自增/自减表达式 左结合<ul>
+<li>var ++</li>
+<li>var --</li>
+<li>primary</li>
+</ul>
+</li>
+<li>primary 简单表达式 由一个变量或字面量(C语言中被称为常量)组成<ul>
+<li>var 变量</li>
+<li>literal 字面量</li>
+</ul>
+</li>
 </ol>
-<p>若指定的变量不存在,则该函数没有其它效果.</p>
-<p>多值变量功能的目的是模拟C/C++中的名称隐藏(name hiding).
-如下例:</p>
-<pre class="editor-colors lang-text"><div class="line"><span class="text plain"><span class="meta paragraph text"><span>int&nbsp;a&nbsp;=&nbsp;5;</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>{</span></span></span></div><div class="line"><span class="text plain"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="meta paragraph text"><span>int&nbsp;a&nbsp;=&nbsp;6;</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>&nbsp;&nbsp;&nbsp;&nbsp;std::cout&lt;&lt;a;//输出6</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>}</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>std::cout&lt;&lt;a;输出5</span></span></span></div></pre></li>
-<li><p><code>bool exists(std::string const&amp; name)</code></p>
-<p>如果存在名为<code>name</code>的变量,则返回真,否则返回假.</p>
-</li>
-</ul>
-<h3 id="variable-access">Variable access</h3>
+<p>该列表中表达式对应的运算符的优先级自上而下依次升高.</p>
+<h4 id="-">用到的技巧</h4>
+<h5 id="-code_fragment-">对code_fragment的使用</h5>
 <ul>
-<li><p><a href="class_var_id.md.html"><code>var_id</code></a><code>get(std::string const&amp; name)</code></p>
-<p>返回标识名为<code>name</code>的变量的<a href="class_var_id.md.html"><code>var_id</code></a>.</p>
-</li>
-<li><p>void set(std::string const&amp; name,int value)</p>
-<p>若名为<code>name</code>的变量存在,则将其可见变量的值设置为<code>value</code>,否则添加名为<code>name</code>的变量并将其初始值设置为value.</p>
+<li>每次开始解析一个表达式时,有一点总是被保证:<code>code_fragment::current</code>返回的字符是未成功解析且将下一个被解析的字符.</li>
+<li>当对<code>code_fragment</code>对象<code>code</code>进行尝试性解析时,使用一个拷贝自<code>code</code>的<code>code_fragment</code>对象<code>code1</code>,如果解析成功,执行<code>code = code1</code>,返回解析结果;否则,直接丢掉<code>code1</code>而不改变<code>code</code>,返回表示失败的标记,对<code>code</code>进行其它方式的解析.</li>
+</ul>
+<h5 id="-optional-">对optional的使用</h5>
+<ul>
+<li>解析失败的标记由optional负责.下面是cppreference上对std::optional的部分介绍<blockquote>
+<p>The class template <code>std::optional</code> manages an optional contained value, i.e. a value that may or may not be present.</p>
+<p>A common use case for optional is the return value of a function that may fail. As opposed to other approaches, such as <code>std::pair&lt;T,bool&gt;</code>, optional handles expensive-to-construct objects well and is more readable, as the intent is expressed explicitly.</p>
+<p>Any instance of <code>optional&lt;T&gt;</code> at any given point in time either contains a value or does not contain a value.</p>
+<p>If an <code>optional&lt;T&gt;</code> contains a value, the value is guaranteed to be allocated as part of the optional object footprint, i.e. <strong>no dynamic memory allocation</strong> ever takes place. Thus, an optional object models an object, not a pointer, even though the <code>operator*()</code> and <code>operator-&gt;()</code> are defined.</p>
+</blockquote>
 </li>
 </ul>
+<p>鉴于<code>optional</code>的表达力,易用性及高效性,我决定选用<code>optional</code>.但由于<code>std::optional</code>是<code>C++17</code>的内容,部分编译器可能不支持,于是我在<code>optional/my_optional.h</code>中用<code>std::unique_ptr</code>写了一个简化和低效的<code>optional</code>.如果编译器支持且要使用高效的<code>std::optional</code>,请在编译时定义宏<code>STD_OPTIONAL</code>.</p>
+<p>对于<code>optional</code>和<code>code_fragment</code>有一点总是被保证:
+若调用一个解析表达式的函数后返回的optional的值为<code>nullopt</code>(表示解析失败),那么传给它的<code>code_fragment</code>的状态与调用前的状态相同.(而若解析成功,传给它的<code>code_fragment</code>的状态通常要改变)</p>
+<h5 id="lvalue-rvalue">lvalue 和 rvalue</h5>
+<p>表达式被分为两类,lvalue和rvalue.</p>
+<p>lvalue返回<a href="class_var_id.md.html"><code>var_id</code></a>,标识变量本身,rvalue则直接返回值.</p>
+<p>对一个层次中的左值表达式的解析通常由两个函数构成,一个尝试检测代码中是否包含该层表达式对应的运算符,另一个负责调用前一个,若检测不存在则尝试下一层表达式.</p>
+<p>如,在赋值表达式中,lvalue_assignment尝试检测是否有赋值运算符,若有则解析赋值右侧的值(赋值运算符右侧也可以是赋值表达式,即可以连续赋值);若lvalue_assignment检测没有赋值运算符,则返回nullopt表示解析失败,即这里不应按赋值表达式的方式解析.</p>
+<p>rvalue_assignment调用调用lvalue_assignment后检查其返回值,若不为nullopt则说明解析成功,rvalue_assignment将左值转成右值(读取变量的值)并返回;若lvalue_assignment解析失败,则rvalue_assignment调用relational进行下一层解析.</p>
+<h5 id="-">对左结合表达式的解析技巧</h5>
+<p>原本<code>递归下降</code>算法只适合右结合的表达式,但这里关系运算符,算术运算符都是左结合的,不能直接用<code>递归下降</code>的方法进行解析.于是我使用了一些技巧:
+一个右结合的表达式term的解析过程通常用如下伪代码表示:</p>
+<pre class="editor-colors lang-text"><div class="line"><span class="text plain"><span class="meta paragraph text"><span>term()</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>{</span></span></span></div><div class="line"><span class="text plain"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="meta paragraph text"><span>value&nbsp;=&nbsp;factor()</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>&nbsp;&nbsp;&nbsp;&nbsp;if(has_op())</span></span></span></div><div class="line"><span class="text plain"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="meta paragraph text"><span>return&nbsp;value&nbsp;op&nbsp;term()//op代表运算符</span></span></span></div><div class="line"><span class="text plain"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="meta paragraph text"><span>else</span></span></span></div><div class="line"><span class="text plain"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="meta paragraph text"><span>return&nbsp;value</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>}</span></span></span></div></pre><p>而如果要把它改成左结合的话,可以对它稍作修改:</p>
+<pre class="editor-colors lang-text"><div class="line"><span class="text plain"><span class="meta paragraph text"><span>term()</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>{</span></span></span></div><div class="line"><span class="text plain"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="meta paragraph text"><span>value&nbsp;=&nbsp;factor()</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>&nbsp;&nbsp;&nbsp;&nbsp;return&nbsp;right_term(value)</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>}</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>right_term(left_value)</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>{</span></span></span></div><div class="line"><span class="text plain"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="meta paragraph text"><span>if(has_op())</span></span></span></div><div class="line"><span class="text plain"><span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="meta paragraph text"><span>return&nbsp;right_term(left_value&nbsp;op&nbsp;factor())&nbsp;//op代表运算符</span></span></span></div><div class="line"><span class="text plain"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="meta paragraph text"><span>else&nbsp;return&nbsp;left_value</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>}</span></span></span></div></pre><p>代码中的expr_calc::term/factor和expr_calc::right_term/right_factor几乎是上述伪代码的直接反映</p>
 <h2 id="see-also">See also</h2>
 <ul>
 <li><a href="class_var_id.md.html"><code>class var_id</code></a></li>
-<li><a href="expr_calc.md.html"><code>class expr_calc</code></a></li>
+<li><a href="code_fragment.md.html"><code>class code_fragment</code></a></li>
 </ul></body>
 </html>
