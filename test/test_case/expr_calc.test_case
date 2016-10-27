@@ -8,25 +8,25 @@
 4 60/3/5;
 2 32-20-10;
 #test relational
-1 12 +13>21 + 2;
+1 12+13>21+2;
 5 a=5
 1 a<12
-12 underscore_id = 12
-1 ++a +7>underscore_id
+12 underscore_id=12
+1 ++a+7>underscore_id
 #test vairable
 5 a=5;
-87 12 +13 - a +3* 21 + 4;
-18 ++a +12;
+87 12+13-a+3*21+4;
+18 ++a+12;
 6 a;
 34 5+a+++23;
 7 a;
-10 underscore_id = 10;
-13 ++underscore_id +2;
+10 underscore_id=10;
+13 ++underscore_id+2;
 #test empty expression
 0 ;
 0 )
 0 ,
 #documentation test
-5 a = 5;
-7 underscore_id = 7;
-1 ++a+10/2>--underscore_id + 4;
+5 a=5;
+7 underscore_id=7;
+1 ++a+10/2>--underscore_id+4;

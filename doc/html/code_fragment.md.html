@@ -2,7 +2,7 @@
 <html>
   <head>
       <meta charset="utf-8" />
-      <title>class_symbol_table</title>
+      <title>code_fragment</title>
       <style>.markdown-preview:not([data-use-github-style]) { padding: 2em; font-size: 1.2em; color: rgb(56, 58, 66); overflow: auto; background-color: rgb(250, 250, 250); }
 .markdown-preview:not([data-use-github-style]) > :first-child { margin-top: 0px; }
 .markdown-preview:not([data-use-github-style]) h1, .markdown-preview:not([data-use-github-style]) h2, .markdown-preview:not([data-use-github-style]) h3, .markdown-preview:not([data-use-github-style]) h4, .markdown-preview:not([data-use-github-style]) h5, .markdown-preview:not([data-use-github-style]) h6 { line-height: 1.2; margin-top: 1.5em; margin-bottom: 0.5em; color: rgb(0, 0, 0); }
@@ -499,43 +499,42 @@ pre.editor-colors .fold-marker:after,
 }
 </style>
   </head>
-  <body class='markdown-preview' data-use-github-style><h1 id="-class-symbol_table-"><code>class symbol_table</code></h1>
+  <body class='markdown-preview' data-use-github-style><h1 id="-class-code_fragment-"><code>class code_fragment</code></h1>
 <h2 id="-">简介</h2>
-<p><code>symbol_table</code>作为符号表的抽象,拥有添加,删除,读写变量的功能.</p>
-<p>它可以对同一个变量同时存储多个值,但只读写最近添加的那一个值,以实现<code>name hiding</code>.</p>
+<p><code>code_fragment</code>是对一片待解析的代码的抽象.它包含一个包含代码的字符串的引用,以及一个字符串中下一个未解析的字符的下标.</p>
 <h2 id="member-functions">Member functions</h2>
-<h3 id="variable-management">Variable management</h3>
+<h3 id="constructor">Constructor</h3>
 <ul>
-<li><p><a href="class_var_id.md.html"><code>var_id</code></a><code>add (std::string const&amp; name)</code></p>
-<p>向符号表中添加名为<code>name</code>的变量.变量的初始值为0(但不保证以后不会把变量初始值修改为unspecific).</p>
-<p>如果符号表中已有同名变量,则原有变量变为hiden变量,新的变量被称为可见变量,该名称(<code>name</code>)被称为多值名称,该变量被称为多值变量.后续所有读写操作均针对可见变量进行.</p>
+<li><p><code>code_fragment(std::string const&amp;s,std::size_t begin_index = 0)</code></p>
+<p>用一个字符串和一个起始下标构造对象,字符串表示要被解析的代码,下标表示要解析的起始位置.
+该对象将绑定到这个字符串,并存储这个起始下标.</p>
 </li>
-<li><p>1). <code>void remove(std::string const&amp;name)</code></p>
-<p>2). <code>void remove(</code><a href="class_var_id.md.html"><code>var_id</code></a><code>id)</code></p>
-<ol>
-<li>从符号表中移除名为<code>name</code>的变量.若<code>name</code>为多值名称,则只有名为<code>name</code>的可见变量被移除,其对应的hiden变量变为可见变量.</li>
-<li>从符号表中移除<code>id</code>指定的变量.若<code>id</code>标识的变量为多值变量,则只有<code>id</code>标识的可见变量被移除,该可见变量对应的hiden变量变为可见变量.</li>
-</ol>
-<p>若指定的变量不存在,则该函数没有其它效果.</p>
-<p>多值变量功能的目的是模拟C/C++中的名称隐藏(name hiding).
-如下例:</p>
-<pre class="editor-colors lang-text"><div class="line"><span class="text plain"><span class="meta paragraph text"><span>int&nbsp;a&nbsp;=&nbsp;5;</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>{</span></span></span></div><div class="line"><span class="text plain"><span>&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="meta paragraph text"><span>int&nbsp;a&nbsp;=&nbsp;6;</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>&nbsp;&nbsp;&nbsp;&nbsp;std::cout&lt;&lt;a;//输出6</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>}</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>std::cout&lt;&lt;a;输出5</span></span></span></div></pre></li>
-<li><p><code>bool exists(std::string const&amp; name)</code></p>
-<p>如果存在名为<code>name</code>的变量,则返回真,否则返回假.</p>
+<li><p><code>code_fragment(code_fragment const&amp;fragment,std::size_t begin_index = 0)</code></p>
+<p>拷贝构造函数,同时可带一个下标<code>begin_index</code>,表示基于<code>fragment</code>的下标开始的要解析的起始位置.</p>
+<p>即:构造出的对象的起始下标 = <code>fragment</code>的起始下标 + <code>begin_index</code></p>
 </li>
 </ul>
-<h3 id="variable-access">Variable access</h3>
+<h3 id="asignment-operator">Asignment operator</h3>
 <ul>
-<li><p><a href="class_var_id.md.html"><code>var_id</code></a><code>get(std::string const&amp; name)</code></p>
-<p>返回标识名为<code>name</code>的变量的<a href="class_var_id.md.html"><code>var_id</code></a>.</p>
-</li>
-<li><p>void set(std::string const&amp; name,int value)</p>
-<p>若名为<code>name</code>的变量存在,则将其可见变量的值设置为<code>value</code>,否则添加名为<code>name</code>的变量并将其初始值设置为value.</p>
+<li><p><code>code_fragment&amp; operator=(code_fragment const&amp; lhs)</code></p>
+<p>使<code>this</code>中的字符串引用绑定到lhs绑定的字符串,<code>this</code>的起始下标变为lhs的起始下标.</p>
 </li>
 </ul>
+<h3 id="code-access">Code access</h3>
+<ul>
+<li><p><code>char current() const</code></p>
+<p>返回绑定的字符串中起始下标对应的字符.</p>
+</li>
+<li><p><code>char operator[](std::size_t pos) const</code></p>
+<p>返回绑定的字符串中 <code>起始下标+pos</code>对应的字符.</p>
+</li>
+</ul>
+<h3 id="code-consumer">Code consumer</h3>
+<ul>
+<li><p><code>void eat()</code></p>
+<p>使起始下标自增1.</p>
 <h2 id="see-also">See also</h2>
-<ul>
-<li><a href="class_var_id.md.html"><code>class var_id</code></a></li>
+</li>
 <li><a href="expr_calc.md.html"><code>class expr_calc</code></a></li>
 </ul></body>
 </html>

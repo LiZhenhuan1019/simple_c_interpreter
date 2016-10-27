@@ -1,4 +1,5 @@
 [class_var_id]: class_var_id.md.html
+[expr_calc]:expr_calc.md.html
 
 
 # `class symbol_table`
@@ -6,6 +7,7 @@
 `symbol_table`作为符号表的抽象,拥有添加,删除,读写变量的功能.
 
 它可以对同一个变量同时存储多个值,但只读写最近添加的那一个值,以实现`name hiding`.
+
 ## Member functions
 ### Variable management
 * [`var_id`][class_var_id]` add (std::string const& name)`
@@ -46,3 +48,4 @@
 
 ## See also
 * [`class var_id`][class_var_id]
+* [`class expr_calc`][expr_calc]
