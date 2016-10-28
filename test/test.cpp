@@ -7,6 +7,7 @@
 #include "../symbol_table.h"
 #include "../expr_calc.h"
 #include "../preprocessor.h"
+#include "../codesim.hxx"
 void test_preprocessor()
 {
     std::string str= R"~(1
@@ -63,12 +64,37 @@ bool test_expr_calc()
     }
     return success;
 }
+void print_vector(std::vector<int> v)
+{
+    for(auto i: v)
+        std::cout<<i<<" ";
+}
+void test_codesim()
+{
+    std::ifstream test1("test/test_case/test2/input.txt");
+    std::string line;
+    std::string code;
+    while(test1)
+    {
+        std::getline(test1,line);
+        line.push_back('\n');
+        code += line;
+    }
+    std::cout <<code;
+    std::string preprocess_code = preprocessor(code).processed_code();
+    Simulator sim;
+    sim.bind(preprocess_code);
+    std::vector<int> lines;
+    sim.runSimulation(lines);
+    print_vector(lines);
+}
 void test_all()
 {
     bool success = true;
     //test_preprocessor();
     test_symbol_table();
     success = success && test_expr_calc();
+    test_codesim();
     if (success)
         std::cout << "Succes!" << std::endl;
     else
