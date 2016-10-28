@@ -259,10 +259,25 @@ inline void Simulator::bind(string codeCache)
 
 /**
  * @name run
- * @param out output of line number in running.
+ * @param out line number in turns.
  */
 inline void Simulator::runSimulation(vector<int>&out)
-{ Main.run(curVars,hiddenVars,out,0,brk); }
+{
+    vector<int> preout;
+    Main.run(curVars,hiddenVars,preout,0,brk);
+    out.clear();
+    if(preout.size()!=0) out.push_back(preout[0]);
+    for(int i=1;i<(int)preout.size();i++)
+        if(preout[i]!=preout[i-1]) out.push_back(preout[i]);
+}
+
+/**
+ * =========================================================================
+ * @NOTICE:
+ *      Below are private functions in class Simulator.
+ *
+ * =========================================================================
+*/
 
 /**
  * @name eos
@@ -270,16 +285,6 @@ inline void Simulator::runSimulation(vector<int>&out)
  */
 inline bool Simulator::eos()
 { return code[ci]=='\0'; }
-
-
-/**
- * =========================================================================
- * @NOTICE:
- *      nearly ALL functions below will change the value of code index "ci".
- *      where they're applied,ci will stand on the right of the final character
- *      that the function prcessed.
- * =========================================================================
-*/
 
 
 /**
