@@ -537,50 +537,56 @@ pre.editor-colors .fold-marker:after,
 <h3 id="implementation">Implementation</h3>
 <p>目前<code>expr_calc</code>使用<em>递归下降</em>算法来解析给出的代码,并立即计算表达式的值和执行副作用.</p>
 <h4 id="syntax">syntax</h4>
+<p>以下使用的语法记法与C++标准文档中使用的语法记法类似.</p>
+<blockquote>
+<p>In the syntax notation used in this International Standard, syntactic categories are indicated by italic type,and literal words and characters in constant width type. Alternatives are listed on separate lines except ina few cases where a long set of alternatives is marked by the phrase “one of.” If the text of an alternative istoo long to fit on a line, the text is continued on subsequent lines indented from the first one.</p>
+</blockquote>
+<p>语法记法中&#39;//&#39;后部分为注释.</p>
 <p>表达式一共分为以下几层:</p>
 <ol>
-<li>comma 逗号表达式 右结合<ul>
-<li>assignment , comma</li>
-<li>assignment</li>
+<li><em>comma</em> //逗号表达式 右结合<ul>
+<li><em>assignment</em> <code>,</code> <em>comma</em></li>
+<li><em>assignment</em></li>
 </ul>
 </li>
-<li>assignment 赋值表达式 右结合<ul>
-<li>var = assignment</li>
-<li>relational</li>
+<li><em>assignment</em> //赋值表达式 右结合<ul>
+<li><em>var</em> <code>=</code> <em>assignment</em></li>
+<li><em>relational</em></li>
+<li>_empty_expr_ //为支持空语句而设.</li>
 </ul>
 </li>
-<li>relational 关系表达式 左结合<ul>
-<li>relational relational_op term 其中relational_op是任意一个关系运算符(==,!=,&lt;,&lt;=,&gt;,&gt;=)</li>
-<li>term</li>
+<li><em>relational</em> //关系表达式 左结合<ul>
+<li><em>relational</em> _relational<em>op</em> <em>term</em> //其中_relational<em>op</em>是任意一个关系运算符(==,!=,&lt;,&lt;=,&gt;,&gt;=)</li>
+<li><em>term</em></li>
 </ul>
 </li>
-<li>term + -表达式 左结合<ul>
-<li>term + factor</li>
-<li>term - factor</li>
-<li>factor</li>
+<li><em>term</em> //+ -表达式 左结合<ul>
+<li><em>term</em> <code>+</code> <em>factor</em></li>
+<li><em>term</em> <code>-</code> <em>factor</em></li>
+<li><em>factor</em></li>
 </ul>
 </li>
-<li>factor * /表达式 左结合<ul>
-<li>factor * prefix</li>
-<li>factor / prefix</li>
-<li>prefix</li>
+<li><em>factor</em> //* /表达式 左结合<ul>
+<li><em>factor</em> <code>*</code> <em>prefix</em></li>
+<li><em>factor</em> <code>/</code> <em>prefix</em></li>
+<li><em>prefix</em></li>
 </ul>
 </li>
-<li>prefix 前缀自增/自减表达式 右结合<ul>
-<li>++ var</li>
-<li>-- var</li>
-<li>postfix</li>
+<li><em>prefix</em> //前缀自增/自减表达式 右结合<ul>
+<li><code>++</code> <em>var</em></li>
+<li><code>--</code> <em>var</em></li>
+<li><em>postfix</em></li>
 </ul>
 </li>
-<li>postfix 后缀自增/自减表达式 左结合<ul>
-<li>var ++</li>
-<li>var --</li>
-<li>primary</li>
+<li><em>postfix</em> //后缀自增/自减表达式 左结合<ul>
+<li><em>var</em> <code>++</code></li>
+<li><em>var</em> <code>--</code></li>
+<li><em>primary</em></li>
 </ul>
 </li>
-<li>primary 简单表达式 由一个变量或字面量(C语言中被称为常量)组成<ul>
-<li>var 变量</li>
-<li>literal 字面量</li>
+<li><em>primary</em> //简单表达式 由一个变量或字面量(C语言中被称为常量)组成<ul>
+<li><em>var</em>  //变量</li>
+<li><em>literal</em>  //字面量(C语言中被称为常量).</li>
 </ul>
 </li>
 </ol>
