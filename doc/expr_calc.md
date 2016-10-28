@@ -40,6 +40,7 @@ member type    |definition
 2. _assignment_ //赋值表达式 右结合
   * _var_ `=` _assignment_
   * _relational_
+  * _empty\_expr_ //为支持空语句而设.
 3. _relational_ //关系表达式 左结合
   * _relational_ _relational_op_ _term_ //其中_relational_op_是任意一个关系运算符(==,!=,<,<=,>,>=)
   * _term_
