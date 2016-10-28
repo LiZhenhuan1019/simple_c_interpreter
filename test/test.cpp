@@ -74,7 +74,7 @@ void test_codesim()
     std::ifstream test1("test/test_case/test2/input.txt");
     std::string line;
     std::string code;
-    while(test1)
+    while(test1.good())
     {
         std::getline(test1,line);
         line.push_back('\n');
