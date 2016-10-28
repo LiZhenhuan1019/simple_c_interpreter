@@ -36,7 +36,7 @@ public:
     void bind(string);
     void runSimulation(vector<int>&);
 
-//private:
+private:
     class Block
     {
     public:
@@ -57,6 +57,7 @@ public:
         vector<Block*> subBlocks;
         BlockType type;
         int lineIndex;
+        bool breakNow; //if there's a break command throw out.
 
         /**
          * @name calc
@@ -66,7 +67,9 @@ public:
         {
             expr_calc calculator(variables,expression);
             int t=calculator.value_of_expr();
+#ifdef DK_COMPILER_CODE_SIMULATOR_CALC_OUTPUT
             printf("*** Calc:[%s]=[%d] ***\n",expression.data(),t);
+#endif
             return t;
         }
 
@@ -79,11 +82,12 @@ public:
          * @param depth
          * @return resault of calculation
          */
-#define NPARAM v,hv,out,depth+1
         int run(symbol_table& v,
                            stack<pair<pair<string,int>,int>>&hv,
                            vector<int>&out,
-                           int depth)
+                           int depth,
+                           bool&breakNow)
+#define NPARAM v,hv,out,depth+1,breakNow
         {
             if(lineIndex!=-1) out.push_back(lineIndex);
 
@@ -93,11 +97,14 @@ public:
             {
                 case Jump:
                     __testout(depth,"run:");
-                    //calc(v);
                     for(int i=0;i<(int)subBlocks.size();i++)
                     {
-                        if(subBlocks[i]->type==Break) break;
                         subBlocks[i]->run(NPARAM);
+                        if(breakNow)
+                        {
+                            // breakNow=false;
+                            break;
+                        }
                     }
                     break;
 
@@ -118,7 +125,11 @@ public:
                     {
                        hv.push(pair<pair<string,int>,int>(
                                    pair<string,int>(expression,v.get(expression).value()),
-                                   depth));
+                                   depth-2)); //announced the depth
+                                              //where the *new* var. is.
+                                              // 0 is current single dec. depth.
+                                              // -1 to "declaratons" depth.
+                                              // -2 to "for" or "block" depth.
                         v.remove(expression);
                     }
                     v.add(expression);
@@ -129,29 +140,27 @@ public:
                     for(subBlocks[0]->run(NPARAM);
                         subBlocks[1]->run(NPARAM);
                         subBlocks[2]->run(NPARAM))
-                        if(subBlocks[3]->type==Break)
-                            break;
-                        else
-                            subBlocks[3]->run(NPARAM);
+                    {
+                        subBlocks[3]->run(NPARAM);
+                        if(breakNow) { breakNow=false; break; }
+                    }
                     break;
 
                 case While:
                     __testout(depth,"whi");
                     while(subBlocks[0]->run(NPARAM))
-                        if(subBlocks[1]->type==Break)
-                            break;
-                        else
-                            subBlocks[1]->run(NPARAM);
+                    {
+                        subBlocks[1]->run(NPARAM);
+                        if(breakNow) { breakNow=false; break; }
+                    }
                     break;
 
                 case DoWhile:
                     __testout(depth,"dwi");
                     do
                     {
-                        if(subBlocks[0]->type==Break)
-                            break;
-                        else
-                            subBlocks[0]->run(NPARAM);
+                        subBlocks[1]->run(NPARAM);
+                        if(breakNow) { breakNow=false; break; }
                     }
                     while(subBlocks[1]->run(NPARAM));
                     break;
@@ -163,6 +172,7 @@ public:
 
                 case Break:
                     __testout(depth,"break");
+                    breakNow=1;
                     break;
 
                 case Empty:
@@ -172,7 +182,7 @@ public:
             }
 #undef NPARAM
 
-            while(!hv.empty() && hv.top().second==depth)
+            while(!hv.empty() && hv.top().second>=depth) //the new var. shall be disabled.
             {
                 //those pushed into this stack by a depth can now free.
                 v.remove(hv.top().first.first);
@@ -191,14 +201,18 @@ public:
 
 
     Block Main;
+    string code;
+
+    //running states.
     stack<pair<pair<string,int>,int>> hiddenVars;
     symbol_table curVars;
-    string code;
     int ci;  //index of code in current reading.
     int lci; //the beginning point of last ci operation.
     int linenum; //line number in current reading.
     int llnum; //line number of beginning point of last linenum operation.
+    bool brk; //whether there's a break tag or not.
 
+    //build functions
     void advance();
     void pass();
     string getword();
@@ -239,6 +253,7 @@ inline void Simulator::bind(string codeCache)
     ci=0;
     Main.type=Block::Jump;
     Main.lineIndex=-1;
+    brk=false;
     build_main(0);
 }
 
@@ -247,7 +262,7 @@ inline void Simulator::bind(string codeCache)
  * @param out output of line number in running.
  */
 inline void Simulator::runSimulation(vector<int>&out)
-{ Main.run(curVars,hiddenVars,out,0); }
+{ Main.run(curVars,hiddenVars,out,0,brk); }
 
 /**
  * @name eos
@@ -517,6 +532,7 @@ inline Simulator::Block* Simulator::build_if(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("if  : \n");
     Block* t=new Block(Block::If);
+    getsymbol(); //skip '('
     t->subBlocks.push_back(build_expression(depth+1));
     t->subBlocks.push_back(build_next(depth+1));
     if(getword().compare("else")==0) //has 'else' paired.
@@ -694,8 +710,9 @@ inline Simulator::Block* Simulator::build_printf(int depth=0)
  */
 inline Simulator::Block* Simulator::build_break(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   "); printf("brk :\n");
+    for(int i=0;i<depth;i++) printf("|   ");
     Block*t=new Block(Block::Break,linenum);
+    printf("brk :\n");
     getsymbol(); //skip ';'
     return t;
 }
