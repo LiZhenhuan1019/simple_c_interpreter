@@ -28,35 +28,40 @@ member type    |definition
 ### Implementation
 目前`expr_calc`使用*递归下降*算法来解析给出的代码,并立即计算表达式的值和执行副作用.
 #### syntax
+以下使用的语法记法与C++标准文档中使用的语法记法类似.
+>In the syntax notation used in this International Standard, syntactic categories are indicated by italic type,and literal words and characters in constant width type. Alternatives are listed on separate lines except ina few cases where a long set of alternatives is marked by the phrase “one of.” If the text of an alternative istoo long to fit on a line, the text is continued on subsequent lines indented from the first one.
+
+语法记法中'//'后部分为注释.
+
 表达式一共分为以下几层:
-1. comma 逗号表达式 右结合
-  * assignment , comma
-  * assignment
-2. assignment 赋值表达式 右结合
-  * var = assignment
-  * relational
-3. relational 关系表达式 左结合
-  * relational relational_op term 其中relational_op是任意一个关系运算符(==,!=,<,<=,>,>=)
-  * term
-4. term + -表达式 左结合
-  * term + factor
-  * term - factor
-  * factor
-5. factor * /表达式 左结合
-  * factor * prefix
-  * factor / prefix
-  * prefix
-6. prefix 前缀自增/自减表达式 右结合
-  * ++ var
-  * -- var
-  * postfix
-7. postfix 后缀自增/自减表达式 左结合
-  * var ++
-  * var --
-  * primary
-8. primary 简单表达式 由一个变量或字面量(C语言中被称为常量)组成
-  * var 变量
-  * literal 字面量
+1. _comma_ //逗号表达式 右结合
+  * _assignment_ `,` _comma_
+  * _assignment_
+2. _assignment_ //赋值表达式 右结合
+  * _var_ `=` _assignment_
+  * _relational_
+3. _relational_ //关系表达式 左结合
+  * _relational_ _relational_op_ _term_ //其中_relational_op_是任意一个关系运算符(==,!=,<,<=,>,>=)
+  * _term_
+4. _term_ //+ -表达式 左结合
+  * _term_ `+` _factor_
+  * _term_ `-` _factor_
+  * _factor_
+5. _factor_ //* /表达式 左结合
+  * _factor_ `*` _prefix_
+  * _factor_ `/` _prefix_
+  * _prefix_
+6. _prefix_ //前缀自增/自减表达式 右结合
+  * `++` _var_
+  * `--` _var_
+  * _postfix_
+7. _postfix_ //后缀自增/自减表达式 左结合
+  * _var_ `++`
+  * _var_ `--`
+  * _primary_
+8. _primary_ //简单表达式 由一个变量或字面量(C语言中被称为常量)组成
+  * _var_  //变量
+  * _literal_  //字面量(C语言中被称为常量).
 
 该列表中表达式对应的运算符的优先级自上而下依次升高.
 
