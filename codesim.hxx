@@ -339,7 +339,7 @@ inline string Simulator::getword()
             (code[ci]>='A' && code[ci]<='Z') ||
              code[ci]=='_') )
     {
-        t.append(1,code[ci]);
+        t.push_back(code[ci]);
         advance();
     }
     return t;
@@ -398,7 +398,7 @@ inline string Simulator::getInParen()
     pass();
     while(!eos() && code[ci]!=')')
     {
-        t.append(1,code[ci]);
+        t.push_back(code[ci]);
         advance();
     }
     getsymbol(); //skip ')'
@@ -415,7 +415,7 @@ inline string Simulator::get_expression()
     string e("");
     while(!eos() && (code[ci]!=';' && code[ci]!=':' && code[ci]!=')'))
     {
-        e.append(1,code[ci]);
+        e.push_back(code[ci]);
         advance();
     }
     //printf("fc:%c-%d\n",code[ci],code[ci]);
@@ -432,7 +432,7 @@ inline string Simulator::get_expression_nocomma()
     string e("");
     while(!eos() && (code[ci]!=';' && code[ci]!=':' && code[ci]!=')' && code[ci]!=','))
     {
-        e.append(1,code[ci]);
+        e.push_back(code[ci]);
         advance();
     }
     //printf("fc:%c-%d\n",code[ci],code[ci]);
@@ -465,7 +465,10 @@ inline Simulator::Block* Simulator::build_next(int depth=0)
     else //word is unrecognized or unable to read word.
     {
         back();
-        t=build_expression(depth);
+        char c=getsymbol();
+        if(c==';') t=build_empty(depth); //unable to read word.
+        else
+        t=build_expression(depth); //unrecognized word.
     }
     return t;
 }
@@ -478,7 +481,7 @@ inline Simulator::Block* Simulator::build_next(int depth=0)
 inline Simulator::Block* Simulator::build_empty(int depth=0)
 {
     __testout(depth,"empty.");
-    Block*t=new Block(Block::Empty,linenum);
+    Block*t=new Block(Block::Empty);
     t->expression=string("");
     getsymbol(); //skip ';'
     return t;
@@ -536,7 +539,7 @@ inline Simulator::Block* Simulator::build_if(int depth=0)
     t->subBlocks.push_back(build_expression(depth+1));
     t->subBlocks.push_back(build_next(depth+1));
     if(getword().compare("else")==0) //has 'else' paired.
-        t->subBlocks.push_back(build_next(depth+1));
+        t->subBlocks.push_back(build_next(depth + 1));
     else
         back(); //the next word is not "else",
                 //must be something else can't be thrown away.
@@ -583,7 +586,7 @@ inline Simulator::Block* Simulator::build_declaration_single(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   ");
     string w=getword();
-    Block*t=new Block(Block::Declaration,linenum);
+    Block*t=new Block(Block::Declaration);
     t->expression=w;
     printf("decl: %s\n",t->expression.data());
     return t;
@@ -696,7 +699,6 @@ inline Simulator::Block* Simulator::build_printf(int depth=0)
 
     getsymbol(); //skip '('
     t->subBlocks.push_back(build_expression(depth+1));
-    getsymbol(); //skip ')'
     getsymbol(); //skip ';'
 
     return t;
