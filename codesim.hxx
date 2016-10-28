@@ -478,7 +478,7 @@ inline Simulator::Block* Simulator::build_next(int depth=0)
 inline Simulator::Block* Simulator::build_empty(int depth=0)
 {
     __testout(depth,"empty.");
-    Block*t=new Block(Block::Empty,linenum);
+    Block*t=new Block(Block::Empty);
     t->expression=string("");
     getsymbol(); //skip ';'
     return t;
@@ -536,7 +536,7 @@ inline Simulator::Block* Simulator::build_if(int depth=0)
     t->subBlocks.push_back(build_expression(depth+1));
     t->subBlocks.push_back(build_next(depth+1));
     if(getword().compare("else")==0) //has 'else' paired.
-        t->subBlocks.push_back(build_next(depth+1));
+        t->subBlocks.push_back(build_next(depth + 1));
     else
         back(); //the next word is not "else",
                 //must be something else can't be thrown away.
@@ -583,7 +583,7 @@ inline Simulator::Block* Simulator::build_declaration_single(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   ");
     string w=getword();
-    Block*t=new Block(Block::Declaration,linenum);
+    Block*t=new Block(Block::Declaration);
     t->expression=w;
     printf("decl: %s\n",t->expression.data());
     return t;
@@ -696,7 +696,6 @@ inline Simulator::Block* Simulator::build_printf(int depth=0)
 
     getsymbol(); //skip '('
     t->subBlocks.push_back(build_expression(depth+1));
-    getsymbol(); //skip ')'
     getsymbol(); //skip ';'
 
     return t;
