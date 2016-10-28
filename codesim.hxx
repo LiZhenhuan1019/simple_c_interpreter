@@ -339,7 +339,7 @@ inline string Simulator::getword()
             (code[ci]>='A' && code[ci]<='Z') ||
              code[ci]=='_') )
     {
-        t.append(1,code[ci]);
+        t.push_back(code[ci]);
         advance();
     }
     return t;
@@ -398,7 +398,7 @@ inline string Simulator::getInParen()
     pass();
     while(!eos() && code[ci]!=')')
     {
-        t.append(1,code[ci]);
+        t.push_back(code[ci]);
         advance();
     }
     getsymbol(); //skip ')'
@@ -415,7 +415,7 @@ inline string Simulator::get_expression()
     string e("");
     while(!eos() && (code[ci]!=';' && code[ci]!=':' && code[ci]!=')'))
     {
-        e.append(1,code[ci]);
+        e.push_back(code[ci]);
         advance();
     }
     //printf("fc:%c-%d\n",code[ci],code[ci]);
@@ -432,7 +432,7 @@ inline string Simulator::get_expression_nocomma()
     string e("");
     while(!eos() && (code[ci]!=';' && code[ci]!=':' && code[ci]!=')' && code[ci]!=','))
     {
-        e.append(1,code[ci]);
+        e.push_back(code[ci]);
         advance();
     }
     //printf("fc:%c-%d\n",code[ci],code[ci]);
@@ -466,9 +466,9 @@ inline Simulator::Block* Simulator::build_next(int depth=0)
     {
         back();
         char c=getsymbol();
-        if(c==';') t=build_empty(depth);
+        if(c==';') t=build_empty(depth); //unable to read word.
         else
-        t=build_expression(depth);
+        t=build_expression(depth); //unrecognized word.
     }
     return t;
 }
