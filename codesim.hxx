@@ -14,13 +14,20 @@ using namespace std;
 #ifndef DK_COMPILER_CODE_SIMULATOR_HXX
 #define DK_COMPILER_CODE_SIMULATOR_HXX
 
+void __testout(int len,const char* l)
+{
+#ifdef DK_COMPILER_CODE_SIMULATOR_TEST_OUTPUT
+    for(int i=0;i<len;i++) printf("|   ");
+    printf("%s",l);
+    printf("\n");
+#endif
+}
+
 /**
  * Code Simulator
  * @UNFINISHED
  * @usage use bind() to bind Simulator with comment-free source code text.
  *        then use run() to run the simulation.
- * @output the line number will output to a *vector<int>*.
- *         the debug info will output to *cin*.
  */
 class Simulator
 {
@@ -30,7 +37,6 @@ public:
     void runSimulation(vector<int>&);
 
 //private:
-
     class Block
     {
     public:
@@ -46,7 +52,7 @@ public:
             Break,
             Empty
         };
-        
+
         string expression;
         vector<Block*> subBlocks;
         BlockType type;
@@ -58,99 +64,148 @@ public:
          */
         int calc(symbol_table& variables)
         {
-#ifdef DK_TEST_TAG_DONOT_CALCULATE
-            cout<<"calculation run!"<<endl;
-            return 0;
-#else
-            expr_calc calcupator(variables);
-            return calcupator.value_of(expression);
-#endif
+            expr_calc calculator(variables,expression);
+            int t=calculator.value_of_expr();
+            printf("*** Calc:[%s]=[%d] ***\n",expression.data(),t);
+            return t;
         }
 
 
         /**
-         * @name run
-         * @return 0 normally.
-         *         1 to terminate function witch runs this block.
+         *
+         * @param v symbols.
+         * @param hv hidden symbols.
+         * @param out to output.
+         * @param depth
+         * @return resault of calculation
          */
-        int run(symbol_table& v,vector<int>&out)
+#define NPARAM v,hv,out,depth+1
+        int run(symbol_table& v,
+                           stack<pair<pair<string,int>,int>>&hv,
+                           vector<int>&out,
+                           int depth)
         {
-            out.push_back(lineIndex);
+            if(lineIndex!=-1) out.push_back(lineIndex);
+
+            int ret=0; //normal return value;
+
             switch(type)
             {
                 case Jump:
-                    calc(v);
+                    __testout(depth,"run:");
+                    //calc(v);
                     for(int i=0;i<(int)subBlocks.size();i++)
-                        if(subBlocks[i]->run(v,out)) break;
+                    {
+                        if(subBlocks[i]->type==Break) break;
+                        subBlocks[i]->run(NPARAM);
+                    }
                     break;
 
                 case If:
-                    if(calc(v))
-                        subBlocks[0]->run(v,out);
+                    __testout(depth,"iff:");
+                    if(subBlocks[0]->run(NPARAM))
+                        subBlocks[1]->run(NPARAM);
                     else
                     {
-                        if(subBlocks.size()>0)
-                            subBlocks[1]->run(v,out);
+                        if(subBlocks.size()==3)
+                        subBlocks[2]->run(NPARAM);
                     }
                     break;
 
                 case Declaration:
+                    __testout(depth,(string("dec:")+expression).data());
+                    if(v.exists(expression))
+                    {
+                       hv.push(pair<pair<string,int>,int>(
+                                   pair<string,int>(expression,v.get(expression).value()),
+                                   depth));
+                        v.remove(expression);
+                    }
                     v.add(expression);
                     break;
 
                 case For:
-                    for(subBlocks[0]->run(v,out);calc(v);subBlocks[2]->run(v,out))
-                        if(subBlocks[1]->run(v,out))
+                    __testout(depth,"for:");
+                    for(subBlocks[0]->run(NPARAM);
+                        subBlocks[1]->run(NPARAM);
+                        subBlocks[2]->run(NPARAM))
+                        if(subBlocks[3]->type==Break)
                             break;
+                        else
+                            subBlocks[3]->run(NPARAM);
                     break;
 
                 case While:
-                    while(calc(v))
-                        if(subBlocks[0]->run(v,out))
+                    __testout(depth,"whi");
+                    while(subBlocks[0]->run(NPARAM))
+                        if(subBlocks[1]->type==Break)
                             break;
+                        else
+                            subBlocks[1]->run(NPARAM);
                     break;
 
                 case DoWhile:
+                    __testout(depth,"dwi");
                     do
                     {
-                        if(subBlocks[0]->run(v,out))
+                        if(subBlocks[0]->type==Break)
                             break;
+                        else
+                            subBlocks[0]->run(NPARAM);
                     }
-                    while(calc(v));
+                    while(subBlocks[1]->run(NPARAM));
                     break;
 
                 case Calculation:
-                    calc(v); //throw return value of this expression!
+                    __testout(depth,(string("cal:")+expression).data());
+                    ret=calc(v); //expression mode.
                     break;
 
                 case Break:
-                        return 1;
+                    __testout(depth,"break");
+                    break;
 
                 case Empty:
+                    __testout(depth,"empty");
+
                 default: break;
             }
+#undef NPARAM
 
-            return 0; //exit normally.
+            while(!hv.empty() && hv.top().second==depth)
+            {
+                //those pushed into this stack by a depth can now free.
+                v.remove(hv.top().first.first);
+                v.add(hv.top().first.first);
+                v.set(hv.top().first.first,hv.top().first.second);
+                hv.pop();
+            }
+
+            return ret; //exit 0 normally, 1 break.
         }
-        
+
         Block(){}
-        Block(BlockType t,int ld):type(t),lineIndex(ld){ }
+        Block(BlockType t,int ld=-1):type(t),lineIndex(ld)
+        { if(lineIndex!=-1) printf("[%d]",lineIndex); }
     };
 
 
     Block Main;
-    stack<pair<string,int>> hiddenVars;
+    stack<pair<pair<string,int>,int>> hiddenVars;
     symbol_table curVars;
     string code;
     int ci;  //index of code in current reading.
     int lci; //the beginning point of last ci operation.
     int linenum; //line number in current reading.
+    int llnum; //line number of beginning point of last linenum operation.
 
     void advance();
     void pass();
     string getword();
     char getsymbol();
     string getInParen();
+    string get_expression();
+    string get_expression_nocomma();
     void back();
 
     bool eos();
@@ -176,7 +231,6 @@ public:
  *       bind this simulator to code.
  * @param variables
  * @param codeCache
- *
  */
 inline void Simulator::bind(string codeCache)
 {
@@ -184,21 +238,23 @@ inline void Simulator::bind(string codeCache)
     linenum=1;
     ci=0;
     Main.type=Block::Jump;
+    Main.lineIndex=-1;
     build_main(0);
 }
 
 /**
  * @name run
+ * @param out output of line number in running.
  */
 inline void Simulator::runSimulation(vector<int>&out)
-{ Main.run(curVars,out); }
+{ Main.run(curVars,hiddenVars,out,0); }
 
 /**
  * @name eos
  * @return if ci arrived the tail of the string.
  */
 inline bool Simulator::eos()
-{ return ci==(int)(code.size()-1); }
+{ return code[ci]=='\0'; }
 
 
 /**
@@ -218,8 +274,6 @@ inline bool Simulator::eos()
  */
 inline void Simulator::advance()
 {
-    if(eos()) return;
-    lci=ci;
     if(code[ci]=='\n') linenum++;
     ci++;
 }
@@ -231,6 +285,7 @@ inline void Simulator::advance()
 inline void Simulator::pass()
 {
     lci=ci;
+    llnum=linenum;
     while(  !eos() &&
             (code[ci]=='\0' ||
              code[ci]==' ' ||
@@ -256,6 +311,7 @@ inline string Simulator::getword()
 {
     pass();
     lci=ci;
+    llnum=linenum;
     if(code[ci]=='{')
     {
         advance();
@@ -279,7 +335,10 @@ inline string Simulator::getword()
  *  undo the ci moving.
  */
 inline void Simulator::back()
-{ ci=lci; }
+{
+    ci=lci;
+    linenum=llnum;
+}
 
 /**
  * @name getsymbol
@@ -293,6 +352,8 @@ inline char Simulator::getsymbol()
 {
     char t=-1;
     pass();
+    lci=ci;
+    llnum=linenum;
     if( !eos() && (
         code[ci]=='(' ||
         code[ci]==')' ||
@@ -307,6 +368,8 @@ inline char Simulator::getsymbol()
 }
 
 /**
+  * @BANNED!!!!!!!!
+  *     this function will not be used.
   * @name getsymbol
   *     let ci stand on the right of tail of *parenthesis*.
   *     ci will be as before if failed.
@@ -325,6 +388,40 @@ inline string Simulator::getInParen()
     }
     getsymbol(); //skip ')'
     return t;
+}
+
+/**
+ * @name get_expression
+ * @return
+ * @process ends with the last character of expression
+ */
+inline string Simulator::get_expression()
+{
+    string e("");
+    while(!eos() && (code[ci]!=';' && code[ci]!=':' && code[ci]!=')'))
+    {
+        e.append(1,code[ci]);
+        advance();
+    }
+    //printf("fc:%c-%d\n",code[ci],code[ci]);
+    return e;
+}
+
+/**
+ * @name get_expression_nocomma
+ * @return
+ * @process ends with the last character of expression
+ */
+inline string Simulator::get_expression_nocomma()
+{
+    string e("");
+    while(!eos() && (code[ci]!=';' && code[ci]!=':' && code[ci]!=')' && code[ci]!=','))
+    {
+        e.append(1,code[ci]);
+        advance();
+    }
+    //printf("fc:%c-%d\n",code[ci],code[ci]);
+    return e;
 }
 
 /*
@@ -354,7 +451,6 @@ inline Simulator::Block* Simulator::build_next(int depth=0)
     {
         back();
         t=build_expression(depth);
-        getsymbol(); //skip ';'
     }
     return t;
 }
@@ -366,8 +462,7 @@ inline Simulator::Block* Simulator::build_next(int depth=0)
  */
 inline Simulator::Block* Simulator::build_empty(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   ");
-    printf("empt: [ci:%d] \n",ci);
+    __testout(depth,"empty.");
     Block*t=new Block(Block::Empty,linenum);
     t->expression=string("");
     getsymbol(); //skip ';'
@@ -383,13 +478,8 @@ inline Simulator::Block* Simulator::build_expression(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   ");
     Block* t=new Block(Block::Calculation,linenum);
-    string e("");
-    while(!eos() && (code[ci]!=';' && code[ci]!=':' && code[ci]!=')'))
-    {
-        e.append(1,code[ci]);
-        ci++;
-    }
-    t->expression=e;
+    t->expression=get_expression();
+    getsymbol(); //skip ';' or ')'
     printf("expr: %s\n",t->expression.data());
     return t;
 }
@@ -404,20 +494,16 @@ inline Simulator::Block* Simulator::build_expression(int depth=0)
  */
 inline Simulator::Block* Simulator::build_block(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   ");
-    printf("blk : \n");
-    Block* t=new Block(Block::Jump,linenum);
-    //expression field in *t is not used.
+    for(int i=0;i<depth;i++) printf("|   "); printf("blk : \n");
+    Block* t=new Block(Block::Jump);
     char c;
-    do
+    c=getsymbol();
+    while(c!='}')
     {
+        back();
         t->subBlocks.push_back(build_next(depth+1));
         c=getsymbol();
-        /*for test*/
-        //printf("<<<%d-%c>>>\n",(int)c,c);
     }
-    while(c!='}');
-
     return t;
 }
 
@@ -430,18 +516,11 @@ inline Simulator::Block* Simulator::build_block(int depth=0)
 inline Simulator::Block* Simulator::build_if(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("if  : \n");
-    Block* t=new Block(Block::If,linenum);
-    string exp=getInParen();
-    
+    Block* t=new Block(Block::If);
+    t->subBlocks.push_back(build_expression(depth+1));
     t->subBlocks.push_back(build_next(depth+1));
-
-    //pass();
-    //printf("<<<%d-%c>>>\n",(int)code[ci],code[ci]);
     if(getword().compare("else")==0) //has 'else' paired.
-    {
-        //printf("else read.\n");
-        t->subBlocks.push_back(build_next(depth + 1));
-    }
+        t->subBlocks.push_back(build_next(depth+1));
     else
         back(); //the next word is not "else",
                 //must be something else can't be thrown away.
@@ -458,13 +537,13 @@ inline Simulator::Block* Simulator::build_if(int depth=0)
 inline Simulator::Block* Simulator::build_declarations(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("decs:\n");
-    Block* t=new Block(Block::Jump,linenum);
+    Block* t=new Block(Block::Jump);
     char c;
     do
     {
-        //printf("add one declaration:\n");
         int orci=ci;
         t->subBlocks.push_back(build_declaration_single(depth+1)); //Declaration only!
+        pass();
         if(code[ci]=='=')
         {
             ci = orci;
@@ -476,7 +555,7 @@ inline Simulator::Block* Simulator::build_declarations(int depth=0)
     return t;
 }
 
-    
+
 /**
  * @name build_declareation_single
  *       a sub-function of build_declaration.
@@ -506,13 +585,8 @@ inline Simulator::Block* Simulator::build_expression_nocomma(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   ");
     Block* t=new Block(Block::Calculation,linenum);
-    string e("");
-    while(!eos() && (code[ci]!=',' && code[ci]!=';' && code[ci]!=':' && code[ci]!=')'))
-    {
-        e.append(1,code[ci]);
-        ci++;
-    }
-    t->expression=e;
+    t->expression=get_expression_nocomma();
+    getsymbol(); //skip ';' or ','
     printf("expn: %s \n",t->expression.data());
     return t;
 }
@@ -526,17 +600,14 @@ inline Simulator::Block* Simulator::build_expression_nocomma(int depth=0)
  */
 inline Simulator::Block* Simulator::build_for(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   ");
-    printf("for : \n");
-    Block*t=new Block(Block::For,linenum);
+    for(int i=0;i<depth;i++) printf("|   "); printf("for : \n");
+    Block*t=new Block(Block::For);
     getsymbol(); //skip '('
     t->subBlocks.push_back(build_next(depth+1));
-    getsymbol(); //skip the first ';'
     t->subBlocks.push_back(build_expression(depth+1));
-    getsymbol(); //skip the second ';'
     t->subBlocks.push_back(build_expression(depth+1));
-    getsymbol(); //skip ')'
     t->subBlocks.push_back(build_next(depth+1));
+    for(int i=0;i<depth;i++) printf("|   "); printf("End:for\n");
     return t;
 }
 
@@ -548,12 +619,12 @@ inline Simulator::Block* Simulator::build_for(int depth=0)
  */
 inline Simulator::Block* Simulator::build_while(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   ");
-    printf("whil: \n");
-    Block*t=new Block(Block::While,linenum);
-    getsymbol(); //read '('
-    t->expression=getInParen();
+    for(int i=0;i<depth;i++) printf("|   "); printf("whil:\n");
+    Block*t=new Block(Block::While);
+    getsymbol(); //skip '('
+    t->subBlocks.push_back(build_expression(depth+1));
     t->subBlocks.push_back(build_next(depth+1));
+    for(int i=0;i<depth;i++) printf("|   "); printf("End:whi\n");
     return t;
 }
 
@@ -566,14 +637,14 @@ inline Simulator::Block* Simulator::build_while(int depth=0)
  */
 inline Simulator::Block* Simulator::build_dowhile(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   ");
-    printf("dwhi:\n");
-    Block*t=new Block(Block::DoWhile,linenum);
+    for(int i=0;i<depth;i++) printf("|   "); printf("dwi: ");
+    Block*t=new Block(Block::DoWhile);
     t->subBlocks.push_back(build_next(depth+1));
     getword(); //skip "while"
     getsymbol(); //skip '('
-    t->expression=getInParen(); //will skip ')'
+    t->subBlocks.push_back(build_expression(depth+1));
     getsymbol(); //skip ';'
+    for(int i=0;i<depth;i++) printf("|   "); printf("End:dwi\n");
     return t;
 }
 
@@ -587,9 +658,8 @@ inline Simulator::Block* Simulator::build_dowhile(int depth=0)
  */
 inline Simulator::Block* Simulator::build_printf(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   ");
-    printf("prin:\n");
-    Block*t=new Block(Block::Jump,linenum);
+    for(int i=0;i<depth;i++) printf("|   "); printf("prin: \n");
+    Block*t=new Block(Block::Jump);
 
     /* disabled. too difficult to complete! */
     /*
@@ -624,8 +694,7 @@ inline Simulator::Block* Simulator::build_printf(int depth=0)
  */
 inline Simulator::Block* Simulator::build_break(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   ");
-    printf("brk :\n");
+    for(int i=0;i<depth;i++) printf("|   "); printf("brk :\n");
     Block*t=new Block(Block::Break,linenum);
     getsymbol(); //skip ';'
     return t;
@@ -638,10 +707,13 @@ inline Simulator::Block* Simulator::build_break(int depth=0)
  */
 inline Simulator::Block& Simulator::build_main(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   ");
-    printf("cmin:[size:%d]\n",(int)code.size());
+    for(int i=0;i<depth;i++) printf("|   "); printf("cmin:[size:%d]\n",(int)code.size());
     while(!eos())
-        Main.subBlocks.push_back(build_next(depth+1));
+    {
+        Main.subBlocks.push_back(build_next(depth + 1));
+        pass();
+        //printf("[%c][%d]\n",code[ci],code[ci]);
+    }
     return Main;
 }
 
