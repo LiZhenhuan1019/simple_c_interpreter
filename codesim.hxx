@@ -465,6 +465,9 @@ inline Simulator::Block* Simulator::build_next(int depth=0)
     else //word is unrecognized or unable to read word.
     {
         back();
+        char c=getsymbol();
+        if(c==';') t=build_empty(depth);
+        else
         t=build_expression(depth);
     }
     return t;
