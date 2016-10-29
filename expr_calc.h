@@ -198,13 +198,10 @@ private:
     }
     int rvalue_prefix(code_fragment& code)
     {
-        auto lvalue = lvalue_prefix(code);
-        if (lvalue)
+        if (auto lvalue = lvalue_prefix(code))
             return lvalue.value().value();
-        else if(auto opt = unary(code))
-            return opt.value();
         else
-            return postfix(code);
+            return unary(code).value();
     }
     optional<var_id> lvalue_prefix(code_fragment& code)
     {
@@ -214,7 +211,7 @@ private:
             if (read_char('+', prefix_fragment))
             {
                 code = prefix_fragment;
-                auto lvalue = lvalue_var(code);
+                auto lvalue = lvalue_prefix_or_var(code);
                 if (lvalue)
                 {
                     var_id id = lvalue.value();
@@ -222,7 +219,7 @@ private:
                     return id;
                 }
                 else
-                    throw std::invalid_argument(std::string("Interpret failed!'++' operator expects lvalue.In ") + __func__);
+                    throw std::invalid_argument(std::string("Interpret failed!prefix '++' operator expects lvalue.In ") + __func__);
             }//may be unary '+'
         }
         else if (read_char('-', prefix_fragment))
@@ -230,7 +227,7 @@ private:
             if (read_char('-', prefix_fragment))
             {
                 code = prefix_fragment;
-                auto lvalue = lvalue_var(code);
+                auto lvalue = lvalue_prefix_or_var(code);
                 if (lvalue)
                 {
                     var_id id = lvalue.value();
@@ -238,19 +235,26 @@ private:
                     return id;
                 }
                 else
-                    throw std::invalid_argument(std::string("Interpret failed!'--' operator expects lvalue.In ") + __func__);
+                    throw std::invalid_argument(std::string("Interpret failed!prefix '--' operator expects lvalue.In ") + __func__);
             }
         }
         return nullopt;
     }
+    optional<var_id> lvalue_prefix_or_var(code_fragment& code)
+    {
+        if(auto lvalue = lvalue_prefix(code))
+            return lvalue.value();
+        else
+            return lvalue_var(code);
+    }
     optional<int> unary(code_fragment& code)
     {
-        if(read_char('+',code))
+        if (read_char('+', code))
             return rvalue_prefix(code);
-        else if(read_char('-',code))
+        else if (read_char('-', code))
             return -rvalue_prefix(code);
         else
-            return nullopt;
+            return postfix(code);
     }
     int postfix(code_fragment& code)
     {

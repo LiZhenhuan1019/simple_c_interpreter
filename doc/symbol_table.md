@@ -1,3 +1,5 @@
+
+[首页](index.md.html)
 # 符号表 `symbol_table`
 ## 简介
 `symbol_table`用于存储变量名及其值.

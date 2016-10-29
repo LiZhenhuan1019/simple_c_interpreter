@@ -499,7 +499,8 @@ pre.editor-colors .fold-marker:after,
 }
 </style>
   </head>
-  <body class='markdown-preview' data-use-github-style><h1 id="-class-expr_calc-"><code>class expr_calc</code></h1>
+  <body class='markdown-preview' data-use-github-style><p><a href="index.md.html">首页</a></p>
+<h1 id="-class-expr_calc-"><code>class expr_calc</code></h1>
 <h2 id="-">简介</h2>
 <p><code>expr_calc</code>用于计算表达式的值,并执行表达式中的副作用(如修改变量的值).它能计算出下面的Implementation.syntax中的文法所指定的任何表达式(变量名与字面量的文法未指出,但在题目中有规定).</p>
 <p><code>expr_calc</code>绑定一个符号表,用于在计算表达式和执行副作用时读写变量信息.</p>
@@ -539,7 +540,7 @@ pre.editor-colors .fold-marker:after,
 <h4 id="syntax">syntax</h4>
 <p>以下使用的语法记法与C++标准文档中使用的语法记法类似.</p>
 <blockquote>
-<p>In the syntax notation used in this International Standard, syntactic categories are indicated by italic type,and literal words and characters in constant width type. Alternatives are listed on separate lines except ina few cases where a long set of alternatives is marked by the phrase “one of.” If the text of an alternative istoo long to fit on a line, the text is continued on subsequent lines indented from the first one.</p>
+<p>In the syntax notation used in this International Standard, syntactic categories are indicated by italic type,and literal words and characters in constant width type. Alternatives are listed on separate lines except in a few cases where a long set of alternatives is marked by the phrase “one of.” If the text of an alternative is too long to fit on a line, the text is continued on subsequent lines indented from the first one.</p>
 </blockquote>
 <p>语法记法中&#39;//&#39;后部分为注释.</p>
 <p>表达式一共分为以下几层:</p>
@@ -573,8 +574,20 @@ pre.editor-colors .fold-marker:after,
 </ul>
 </li>
 <li><em>prefix</em> //前缀自增/自减表达式 右结合<ul>
-<li><code>++</code> <em>var</em></li>
-<li><code>--</code> <em>var</em></li>
+<li><code>++</code> _lvalue_prefix_or_var_</li>
+<li><code>--</code> _lvalue_prefix_or_var_</li>
+<li><em>unary</em></li>
+</ul>
+</li>
+<li>_lvalue_prefix_or_var_ //左值表达式,前置自增表达式或者本身是变量<ul>
+<li><code>++</code> _lvalue_prefix_or_var_</li>
+<li><code>--</code> _lvalue_prefix_or_var_</li>
+<li><em>var</em></li>
+</ul>
+</li>
+<li><em>unary</em> //一元加减表达式 右结合<ul>
+<li><code>+</code> <em>prefix</em></li>
+<li><code>-</code> <em>prefix</em></li>
 <li><em>postfix</em></li>
 </ul>
 </li>

@@ -14,6 +14,8 @@ long_name = 7;
 如果编译器支持`std::optional`,编译时可以加上选项`-DSTD_OPTIONAL`
 
 ## 组件文档
+* [解释器](codesim.md.html) 用于解释执行一片代码并得出代码执行的行号序列.
+* [预处理器](preprocessor.md.html) 用于对即将传给[解释器](codesim.md.html)的代码进行预处理.
 * [符号表](symbol_table.md.html) 用于存储变量名及其值.
 * [表达式计算](expr_calc.md.html) 用于计算表达式的值,并执行表达式中的副作用(如修改变量的值).
 * [代码片段](code_fragment.md.html) 对一片待解析的代码的抽象.

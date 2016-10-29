@@ -1,5 +1,6 @@
 [class_var_id]: class_var_id.md.html
 [code_fragment]: code_fragment.md.html
+[首页](index.md.html)
 
 # `class expr_calc`
 ## 简介
@@ -29,7 +30,7 @@ member type    |definition
 目前`expr_calc`使用*递归下降*算法来解析给出的代码,并立即计算表达式的值和执行副作用.
 #### syntax
 以下使用的语法记法与C++标准文档中使用的语法记法类似.
->In the syntax notation used in this International Standard, syntactic categories are indicated by italic type,and literal words and characters in constant width type. Alternatives are listed on separate lines except ina few cases where a long set of alternatives is marked by the phrase “one of.” If the text of an alternative istoo long to fit on a line, the text is continued on subsequent lines indented from the first one.
+>In the syntax notation used in this International Standard, syntactic categories are indicated by italic type,and literal words and characters in constant width type. Alternatives are listed on separate lines except in a few cases where a long set of alternatives is marked by the phrase “one of.” If the text of an alternative is too long to fit on a line, the text is continued on subsequent lines indented from the first one.
 
 语法记法中'//'后部分为注释.
 
@@ -53,14 +54,22 @@ member type    |definition
   * _factor_ `/` _prefix_
   * _prefix_
 6. _prefix_ //前缀自增/自减表达式 右结合
-  * `++` _var_
-  * `--` _var_
+  * `++` _lvalue\_prefix\_or\_var_
+  * `--` _lvalue\_prefix\_or\_var_
+  * _unary_
+7. _lvalue\_prefix\_or\_var_ //左值表达式,前置自增表达式或者本身是变量
+  * `++` _lvalue\_prefix\_or\_var_
+  * `--` _lvalue\_prefix\_or\_var_
+  * _var_
+8. _unary_ //一元加减表达式 右结合
+  * `+` _prefix_
+  * `-` _prefix_
   * _postfix_
-7. _postfix_ //后缀自增/自减表达式 左结合
+9. _postfix_ //后缀自增/自减表达式 左结合
   * _var_ `++`
   * _var_ `--`
   * _primary_
-8. _primary_ //简单表达式 由一个变量或字面量(C语言中被称为常量)组成
+10. _primary_ //简单表达式 由一个变量或字面量(C语言中被称为常量)组成
   * _var_  //变量
   * _literal_  //字面量(C语言中被称为常量).
 

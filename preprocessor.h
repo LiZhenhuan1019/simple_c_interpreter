@@ -15,12 +15,12 @@ public:
     {}
     std::string processed_code()
     {
-        ensure_end_of_line();
+        ensure_end_of_code();
         eliminate();
         return code;
     }
 private:
-    void ensure_end_of_line()
+    void ensure_end_of_code()
     {
         if (code.back() != '\0')
             code.push_back('\0');

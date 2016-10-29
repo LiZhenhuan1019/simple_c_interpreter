@@ -1,5 +1,6 @@
 [expr_calc]: expr_calc.md.html
 
+[首页](index.md.html)
 # `class code_fragment`
 ## 简介
 `code_fragment`是对一片待解析的代码的抽象.它包含一个包含代码的字符串的引用,以及一个字符串中下一个未解析的字符的下标.

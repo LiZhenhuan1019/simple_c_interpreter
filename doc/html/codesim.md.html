@@ -2,7 +2,7 @@
 <html>
   <head>
       <meta charset="utf-8" />
-      <title>symbol_table</title>
+      <title>codesim</title>
       <style>.markdown-preview:not([data-use-github-style]) { padding: 2em; font-size: 1.2em; color: rgb(56, 58, 66); overflow: auto; background-color: rgb(250, 250, 250); }
 .markdown-preview:not([data-use-github-style]) > :first-child { margin-top: 0px; }
 .markdown-preview:not([data-use-github-style]) h1, .markdown-preview:not([data-use-github-style]) h2, .markdown-preview:not([data-use-github-style]) h3, .markdown-preview:not([data-use-github-style]) h4, .markdown-preview:not([data-use-github-style]) h5, .markdown-preview:not([data-use-github-style]) h6 { line-height: 1.2; margin-top: 1.5em; margin-bottom: 0.5em; color: rgb(0, 0, 0); }
@@ -500,13 +500,64 @@ pre.editor-colors .fold-marker:after,
 </style>
   </head>
   <body class='markdown-preview' data-use-github-style><p><a href="index.md.html">首页</a></p>
-<h1 id="-symbol_table-">符号表 <code>symbol_table</code></h1>
+<h1 id="-class-simulator-"><code>class Simulator</code></h1>
 <h2 id="-">简介</h2>
-<p><code>symbol_table</code>用于存储变量名及其值.</p>
-<p>它可以对同一个变量同时存储多个值,但只读写最近添加的那一个值,以实现<code>name hiding</code>.</p>
-<h2 id="-">组件</h2>
+<p><code>Simulator</code> 是一个用于分析并模拟运行一段C语言代码的类.</p>
+<p>支持的C语言语法有:</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>包括但不限于</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>变量声明</td>
+<td><code>int ...;</code></td>
+</tr>
+<tr>
+<td>顺序结构</td>
+<td><code>a++;b++;</code> <br> <code>{int a; {a++;}}</code></td>
+</tr>
+<tr>
+<td>选择结构</td>
+<td><code>if(a==1) a++; else a--;</code></td>
+</tr>
+<tr>
+<td>循环结构</td>
+<td><code>for(...;...;...)...</code><br> <code>while(...)...</code> <br> <code>do...while(...)</code></td>
+</tr>
+<tr>
+<td>跳转</td>
+<td><code>break</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="-">成员函数</h2>
+<h3 id="-">构造函数</h3>
 <ul>
-<li><a href="class_var_id.md.html"><code>class var_id</code></a> 用于标识一个变量,并封装对这个变量的读写操作.</li>
-<li><a href="class_symbol_table.md.html"><code>class symbol_table</code></a> 作为符号表的抽象,拥有添加,删除,读写变量的功能.</li>
+<li><p><code>Simulator()</code></p>
+<p>仅构造对象(声明内部变量),不采取任何操作.</p>
+</li>
+</ul>
+<h3 id="-">功能函数</h3>
+<ul>
+<li><p><code>void Bind(string)</code></p>
+<p>输入保存有一段代码的字符串.以值为0的字符结尾.</p>
+<p>该字符串必须经过<a href="preprocessor.md.html">预处理</a>, <strong>代码中不能出现双引号字符串和单引号字符</strong>.</p>
+<p>函数执行完毕后,语法树构建完成,可以直接模拟运行.</p>
+</li>
+</ul>
+<ul>
+<li><p><code>void runSimulation(std::vector&lt;int&gt;&amp;)</code></p>
+<p>模拟运行由bind()函数分析的程序.</p>
+<p>语句逐行运行, 每条语句的行号被保存为int值, 去除相邻相同值后保存在传进来的vector参数中.</p>
+</li>
+</ul>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="preprocessor.md.html">预处理器</a></li>
+<li><a href="expr_calc.md.html">表达式计算</a></li>
 </ul></body>
 </html>

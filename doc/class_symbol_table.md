@@ -1,6 +1,7 @@
 [class_var_id]: class_var_id.md.html
 [expr_calc]:expr_calc.md.html
 
+[首页](index.md.html)
 
 # `class symbol_table`
 ## 简介
