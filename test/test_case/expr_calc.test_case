@@ -22,6 +22,7 @@
 7 a;
 21 5+-a+++23;
 8 a;
+15 ++++a+5;
 10 underscore_id=10;
 13 ++underscore_id+2;
 -12 -++underscore_id;
