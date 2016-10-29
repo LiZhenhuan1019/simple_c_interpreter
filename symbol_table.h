@@ -36,6 +36,7 @@ private:
 class symbol_table
 {
 public:
+    using iterator_t = std::map<std::string,std::vector<int>>::iterator;
     var_id add(std::string const& name)
     {
         auto iter = int_variables.find(name);
@@ -75,6 +76,15 @@ public:
             else
                 int_variables.erase(iter);
         }
+    }
+
+    iterator_t begin()
+    {
+        return int_variables.begin();
+    }
+    iterator_t end()
+    {
+        return int_variables.end();
     }
 private:
     std::map<std::string,std::vector<int>> int_variables;
