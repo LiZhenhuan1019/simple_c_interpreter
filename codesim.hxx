@@ -14,6 +14,13 @@ using namespace std;
 #ifndef DK_COMPILER_CODE_SIMULATOR_HXX
 #define DK_COMPILER_CODE_SIMULATOR_HXX
 
+
+/*
+ * @name __testout
+ * @notice do not use it on anywhere out of class Simulator.
+ * @param len
+ * @param l
+ */
 inline void __testout(int len,const char* l)
 {
 #ifdef DK_COMPILER_CODE_SIMULATOR_TEST_OUTPUT
@@ -33,6 +40,7 @@ class Simulator
 {
 public:
     Simulator(){}
+    ~Simulator();
     void bind(string);
     void runSimulation(vector<int>&);
 
@@ -59,6 +67,10 @@ private:
         int lineIndex;
         bool breakNow; //if there's a break command throw out.
 
+        Block(){}
+        Block(BlockType t,int ld=-1):type(t),lineIndex(ld)
+        { if(lineIndex!=-1) printf("[%d]",lineIndex); }
+
         /**
          * @name calc
          * @return value of expression.
@@ -68,26 +80,28 @@ private:
             expr_calc calculator(variables,expression);
             int t=calculator.value_of_expr();
 #ifdef DK_COMPILER_CODE_SIMULATOR_CALC_OUTPUT
-            printf("*** Calc:[%s]=[%d] ***\n",expression.data(),t);
+            printf("Calc:[%s]=[%d]",expression.data(),t);
+            printf("\n");
 #endif
             return t;
         }
 
-
         /**
-         *
+         * @name run
          * @param v symbols.
          * @param hv hidden symbols.
          * @param out to output.
          * @param depth
+         * @param breakNow this tag will be recieved (and removed
+         *                 if is not block) representing break.
          * @return resault of calculation
          */
+#define NPARAM v,hv,out,depth+1,breakNow
         int run(symbol_table& v,
                            stack<pair<pair<string,int>,int>>&hv,
                            vector<int>&out,
                            int depth,
                            bool&breakNow)
-#define NPARAM v,hv,out,depth+1,breakNow
         {
             if(lineIndex!=-1) out.push_back(lineIndex);
 
@@ -159,7 +173,7 @@ private:
                     __testout(depth,"dwi");
                     do
                     {
-                        subBlocks[1]->run(NPARAM);
+                        subBlocks[0]->run(NPARAM);
                         if(breakNow) { breakNow=false; break; }
                     }
                     while(subBlocks[1]->run(NPARAM));
@@ -180,9 +194,7 @@ private:
 
                 default: break;
             }
-#undef NPARAM
-
-            while(!hv.empty() && hv.top().second>=depth) //the new var. shall be disabled.
+            while(!hv.empty() && hv.top().second>=depth) //the new var shall be disabled.
             {
                 //those pushed into this stack by a depth can now free.
                 v.remove(hv.top().first.first);
@@ -193,12 +205,20 @@ private:
 
             return ret; //exit 0 normally, 1 break.
         }
+#undef NPARAM
 
-        Block(){}
-        Block(BlockType t,int ld=-1):type(t),lineIndex(ld)
-        { if(lineIndex!=-1) printf("[%d]",lineIndex); }
+        /**
+         * @name suicide
+         *      *delete* *this itself.
+         *      instead of destructor function.
+         */
+        void suicide()
+        {
+            for(int i=0;i<(int)subBlocks.size();i++)
+                subBlocks[i]->suicide();
+            delete this;
+        }
     };
-
 
     Block Main;
     string code;
@@ -237,8 +257,17 @@ private:
     Block* build_expression(int);
     Block* build_expression_nocomma(int);
     Block* build_break(int);
-    Block& build_main(int);
+    void build_main(int);
 };
+
+/**
+ * @name ~Simulator
+ *      destructor.
+ */
+inline Simulator::~Simulator()
+{
+    Main.suicide();
+}
 
 /**
  * @name bind
@@ -273,9 +302,16 @@ inline void Simulator::runSimulation(vector<int>&out)
 
 /**
  * =========================================================================
+ * =========================================================================
  * @NOTICE:
- *      Below are private functions in class Simulator.
- *
+ *      Right below are private functions in class Simulator.
+ *      All those functions are used to build grammer tree.
+ *      We assume that there's no error in input code.
+ *      So if there's a keyword, there must be an exact code-struction.
+ *      If there's no keyword, it shall be an expression.
+ *      We construct tree along with the struct-based grammer code.
+ *      Recursion may be used.
+ * =========================================================================
  * =========================================================================
 */
 
@@ -503,7 +539,7 @@ inline Simulator::Block* Simulator::build_expression(int depth=0)
     Block* t=new Block(Block::Calculation,linenum);
     t->expression=get_expression();
     getsymbol(); //skip ';' or ')'
-    printf("expr: %s\n",t->expression.data());
+    printf("expr:%s\n",t->expression.data());
     return t;
 }
 
@@ -661,7 +697,7 @@ inline Simulator::Block* Simulator::build_while(int depth=0)
  */
 inline Simulator::Block* Simulator::build_dowhile(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   "); printf("dwi: ");
+    for(int i=0;i<depth;i++) printf("|   "); printf("dwi: \n");
     Block*t=new Block(Block::DoWhile);
     t->subBlocks.push_back(build_next(depth+1));
     getword(); //skip "while"
@@ -729,16 +765,14 @@ inline Simulator::Block* Simulator::build_break(int depth=0)
  * build the main funtion as a block.
  * @process ends with '}'
  */
-inline Simulator::Block& Simulator::build_main(int depth=0)
+inline void Simulator::build_main(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("cmin:[size:%d]\n",(int)code.size());
     while(!eos())
     {
         Main.subBlocks.push_back(build_next(depth + 1));
         pass();
-        //printf("[%c][%d]\n",code[ci],code[ci]);
     }
-    return Main;
 }
 
 #endif //DK_COMPILER_CODE_SIMULATOR_HXX
