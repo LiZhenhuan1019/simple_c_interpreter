@@ -8,8 +8,11 @@
 #include "code_fragment.h"
 #include "symbol_table.h"
 #include <stdexcept>
+
 #ifdef STD_OPTIONAL
+
 #include <experimental/optional>
+
 using std::experimental::optional;
 using std::experimental::nullopt;
 #else
@@ -24,29 +27,27 @@ class expr_calc
         equal, not_equal, less, less_or_equal, greater, greater_or_equal
     };
 public:
-    expr_calc(symbol_table& table,std::string const& code)//如果code的实参是temporary,构造的expr_calc也应是temporary
-        : table_(table),code_(code)
+    expr_calc(symbol_table& table, std::string const& code)//如果code的实参是temporary,构造的expr_calc也应是temporary
+        : table_(table), code_(code)
     {
 
     }
     int value_of_expr(std::size_t begin_pos = 0) //可为空表达式
     {
-        code_fragment code(code_,begin_pos);
+        code_fragment code(code_, begin_pos);
         return comma(code);
     }
     int value_of_initializer(std::size_t begin_pos = 0) //不解析',',不能为空表达式
     {
-        code_fragment code(code_,begin_pos);
+        code_fragment code(code_, begin_pos);
         return rvalue_assignment(code);
     }
 private:
     int comma(code_fragment& code)
     {
         int left = rvalue_assignment(code);
-        code_fragment comma_fragment(code);
-        if(skipping_space_get_current_and_eat(comma_fragment) == ',')
+        if (read_char(',', code))
         {
-            code = comma_fragment;
             return comma(code);
         }
         else
@@ -54,7 +55,7 @@ private:
     }
     int rvalue_assignment(code_fragment& code)
     {
-        if(empty_expr(code))
+        if (empty_expr(code))
             return 0;
         if (auto lvalue = lvalue_assignment(code)) //declaration as condition: test if lvalue is non-zero
         {
@@ -75,7 +76,7 @@ private:
         auto lvalue = lvalue_var(assignment_fragment);//can be safely discarded.
         if (lvalue)
         {
-            if (skipping_space_get_current_and_eat(assignment_fragment) == '=')
+            if (read_char('=', assignment_fragment))
             {
                 if (assignment_fragment.current() != '=') //if it is not equality operator
                 {
@@ -91,9 +92,9 @@ private:
     int relational(code_fragment& code)
     {
         int left = term(code);
-        return right_relational(left,code);
+        return right_relational(left, code);
     }
-    int right_relational(int left_value,code_fragment&code)
+    int right_relational(int left_value, code_fragment& code)
     {
         code_fragment relational_fragment(code);
         auto opt = relational_op_type(relational_fragment);
@@ -125,36 +126,33 @@ private:
     }
     optional<relational_op> relational_op_type(code_fragment& code)
     {
-        char c = skipping_space_get_current_and_eat(code);
-        if (c == '=')
+        if (read_char('=', code))
         {
-            if (code.current_and_eat() == '=')
+            if (read_char('=', code))
                 return relational_op::equal;
             else
                 throw std::invalid_argument(std::string("Interpret failed!Expect '==' operator.In ") + __func__);
         }
-        else if (c == '!')
+        else if (read_char('!', code))
         {
-            if (code.current_and_eat() == '=')
+            if (read_char('=', code))
                 return relational_op::not_equal;
             else
                 throw std::invalid_argument(std::string("Interpret failed!Expect '!=' operator.In ") + __func__);
         }
-        else if (c == '<')
+        else if (read_char('<', code))
         {
-            if (code.current() == '=')
+            if (read_char('=', code))
             {
-                code.eat();
                 return relational_op::less_or_equal;
             }
             else
                 return relational_op::less;
         }
-        else if (c == '>')
+        else if (read_char('>', code))
         {
-            if (code.current() == '=')
+            if (read_char('=', code))
             {
-                code.eat();
                 return relational_op::greater_or_equal;
             }
             else
@@ -169,16 +167,12 @@ private:
     }
     int right_term(int left_value, code_fragment& code)
     {
-        code_fragment term_fragment(code);
-        char c = skipping_space_get_current_and_eat(term_fragment);
-        if (c == '+')
+        if (read_char('+', code))
         {
-            code = term_fragment;
             return right_term(left_value + factor(code), code);
         }
-        else if (c == '-')
+        else if (read_char('-', code))
         {
-            code = term_fragment;
             return right_term(left_value - factor(code), code);
         }
         else
@@ -191,16 +185,12 @@ private:
     }
     int right_factor(int left_value, code_fragment& code)
     {
-        code_fragment factor_fragment(code);
-        char op = skipping_space_get_current_and_eat(factor_fragment);
-        if (op == '*')
+        if (read_char('*', code))
         {
-            code = factor_fragment;
             return right_factor(left_value * rvalue_prefix(code), code);
         }
-        else if (op == '/')
+        else if (read_char('/', code))
         {
-            code = factor_fragment;
             return right_factor(left_value / rvalue_prefix(code), code);
         }
         else
@@ -211,16 +201,17 @@ private:
         auto lvalue = lvalue_prefix(code);
         if (lvalue)
             return lvalue.value().value();
+        else if(auto opt = unary(code))
+            return opt.value();
         else
             return postfix(code);
     }
     optional<var_id> lvalue_prefix(code_fragment& code)
     {
         code_fragment prefix_fragment(code);
-        char op = skipping_space_get_current_and_eat(prefix_fragment);
-        if (op == '+')
+        if (read_char('+', prefix_fragment))
         {
-            if (prefix_fragment.current_and_eat() == '+')
+            if (read_char('+', prefix_fragment))
             {
                 code = prefix_fragment;
                 auto lvalue = lvalue_var(code);
@@ -232,13 +223,11 @@ private:
                 }
                 else
                     throw std::invalid_argument(std::string("Interpret failed!'++' operator expects lvalue.In ") + __func__);
-            }
-            else
-                throw std::invalid_argument(std::string("Interpret failed!Expect '++' operator.In ") + __func__);
+            }//may be unary '+'
         }
-        else if (op == '-')
+        else if (read_char('-', prefix_fragment))
         {
-            if (prefix_fragment.current_and_eat() == '-')
+            if (read_char('-', prefix_fragment))
             {
                 code = prefix_fragment;
                 auto lvalue = lvalue_var(code);
@@ -251,21 +240,34 @@ private:
                 else
                     throw std::invalid_argument(std::string("Interpret failed!'--' operator expects lvalue.In ") + __func__);
             }
-            else
-                throw std::invalid_argument(std::string("Interpret failed!Expect '--' operator.In ") + __func__);
         }
         return nullopt;
     }
+    optional<int> unary(code_fragment& code)
+    {
+        if(read_char('+',code))
+            return rvalue_prefix(code);
+        else if(read_char('-',code))
+            return -rvalue_prefix(code);
+        else
+            return nullopt;
+    }
     int postfix(code_fragment& code)
+    {
+        if (auto opt = real_postfix(code))
+            return opt.value();
+        else
+            return rvalue_primary(code);
+    }
+    optional<int> real_postfix(code_fragment& code)
     {
         code_fragment postfix_fragment(code);
         auto lvalue = lvalue_var(postfix_fragment);  //TODO:也许改成调用'lvalue_primary'会更加一致?但目前似乎没有必要.
         if (lvalue)
         {
-            char op = skipping_space_get_current_and_eat(postfix_fragment);
-            if (op == '+')
+            if (read_char('+', postfix_fragment))
             {
-                if (postfix_fragment.current_and_eat() == '+')
+                if (read_char('+', postfix_fragment))
                 {
                     code = postfix_fragment;
                     var_id id = lvalue.value();
@@ -274,9 +276,9 @@ private:
                     return value;
                 }
             }
-            else if (op == '-')
+            else if (read_char('-', postfix_fragment))
             {
-                if (postfix_fragment.current_and_eat() == '-')
+                if (read_char('-', postfix_fragment))
                 {
                     code = postfix_fragment;
                     var_id id = lvalue.value();
@@ -286,17 +288,17 @@ private:
                 }
             }
         }
-        return rvalue_primary(code);
+        return nullopt;
     }
     int rvalue_primary(code_fragment& code)
     {
         auto var = rvalue_var(code);
-        if(var)
+        if (var)
             return var.value();
         else
         {
             auto lit = literal(code);
-            if(lit)
+            if (lit)
                 return lit.value();
         }
         throw std::invalid_argument(std::string("Interpret failed!Expect primary expression.In ") + __func__);
@@ -304,32 +306,30 @@ private:
     optional<int> rvalue_var(code_fragment& code)
     {
         auto var = lvalue_var(code);
-        if(var)
+        if (var)
             return var.value().value();
         else
             return nullopt;
     }
     optional<var_id> lvalue_var(code_fragment& code)
     {
-        code_fragment variable_fragment(code);
-        auto name = read_identifier(variable_fragment);
-        if(name)
+        auto name = read_identifier(code);
+        if (name)
         {
-            code = variable_fragment;
-            if(table_.exists(name.value()))
+            if (table_.exists(name.value()))
             {
                 return table_.get(name.value());
             }
             else
-                throw std::invalid_argument(std::string("Interpret failed!Identifier ") + name.value() +" is undeclared.In " + __func__);
+                throw std::invalid_argument(std::string("Interpret failed!Identifier ") + name.value() + " is undeclared.In " + __func__);
         }
         else
             return nullopt;
     }
     optional<int> literal(code_fragment& code)
     {
-         auto lit = read_literal(code);
-        if(lit)
+        auto lit = read_literal(code);
+        if (lit)
             return lit.value();
         else
             return nullopt;
@@ -359,7 +359,18 @@ private:
     }
     bool is_id_char(char c)
     {
-        return std::isalnum(c) || c =='_';
+        return std::isalnum(c) || c == '_';
+    }
+    bool read_char(char c, code_fragment& code)
+    {
+        code_fragment char_fragment(code);
+        if (skipping_space_get_current_and_eat(char_fragment) == c)
+        {
+            code = char_fragment;
+            return true;
+        }
+        else
+            return false;
     }
     optional<std::string> read_identifier(code_fragment& code)
     {
