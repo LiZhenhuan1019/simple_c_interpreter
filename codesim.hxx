@@ -14,7 +14,13 @@ using namespace std;
 #ifndef DK_COMPILER_CODE_SIMULATOR_HXX
 #define DK_COMPILER_CODE_SIMULATOR_HXX
 
-void __testout(int len,const char* l)
+
+/*
+ * @name __testout
+ * @param len
+ * @param l
+ */
+inline void __testout(int len,const char* l)
 {
 #ifdef DK_COMPILER_CODE_SIMULATOR_TEST_OUTPUT
     for(int i=0;i<len;i++) printf("|   ");
@@ -68,7 +74,8 @@ private:
             expr_calc calculator(variables,expression);
             int t=calculator.value_of_expr();
 #ifdef DK_COMPILER_CODE_SIMULATOR_CALC_OUTPUT
-            printf("*** Calc:[%s]=[%d] ***\n",expression.data(),t);
+            printf("Calc:[%s]=[%d]",expression.data(),t);
+            printf("\n");
 #endif
             return t;
         }
@@ -80,6 +87,8 @@ private:
          * @param hv hidden symbols.
          * @param out to output.
          * @param depth
+         * @param breakNow this tag will be recieved (and removed
+         *                 if is not block) representing break.
          * @return resault of calculation
          */
         int run(symbol_table& v,
@@ -159,7 +168,7 @@ private:
                     __testout(depth,"dwi");
                     do
                     {
-                        subBlocks[1]->run(NPARAM);
+                        subBlocks[0]->run(NPARAM);
                         if(breakNow) { breakNow=false; break; }
                     }
                     while(subBlocks[1]->run(NPARAM));
@@ -182,7 +191,7 @@ private:
             }
 #undef NPARAM
 
-            while(!hv.empty() && hv.top().second>=depth) //the new var. shall be disabled.
+            while(!hv.empty() && hv.top().second>=depth) //the new var shall be disabled.
             {
                 //those pushed into this stack by a depth can now free.
                 v.remove(hv.top().first.first);
@@ -273,9 +282,16 @@ inline void Simulator::runSimulation(vector<int>&out)
 
 /**
  * =========================================================================
+ * =========================================================================
  * @NOTICE:
- *      Below are private functions in class Simulator.
- *
+ *      Right below are private functions in class Simulator.
+ *      All those functions are used to build grammer tree.
+ *      We assume that there's no error in input code.
+ *      So if there's a keyword, there must be an exact code-struction.
+ *      If there's no keyword, it shall be an expression.
+ *      We construct tree along with the struct-based grammer code.
+ *      Recursion may be used.
+ * =========================================================================
  * =========================================================================
 */
 
@@ -503,7 +519,7 @@ inline Simulator::Block* Simulator::build_expression(int depth=0)
     Block* t=new Block(Block::Calculation,linenum);
     t->expression=get_expression();
     getsymbol(); //skip ';' or ')'
-    printf("expr: %s\n",t->expression.data());
+    printf("expr:%s\n",t->expression.data());
     return t;
 }
 
@@ -661,7 +677,7 @@ inline Simulator::Block* Simulator::build_while(int depth=0)
  */
 inline Simulator::Block* Simulator::build_dowhile(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   "); printf("dwi: ");
+    for(int i=0;i<depth;i++) printf("|   "); printf("dwi: \n");
     Block*t=new Block(Block::DoWhile);
     t->subBlocks.push_back(build_next(depth+1));
     getword(); //skip "while"
