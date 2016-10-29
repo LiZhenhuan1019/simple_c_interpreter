@@ -14,7 +14,7 @@ using namespace std;
 #ifndef DK_COMPILER_CODE_SIMULATOR_HXX
 #define DK_COMPILER_CODE_SIMULATOR_HXX
 
-void __testout(int len,const char* l)
+inline void __testout(int len,const char* l)
 {
 #ifdef DK_COMPILER_CODE_SIMULATOR_TEST_OUTPUT
     for(int i=0;i<len;i++) printf("|   ");

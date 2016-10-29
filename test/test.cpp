@@ -110,9 +110,9 @@ void test_codesim()
         sim.bind(preprocess_code);
         std::vector<int> lines;
         sim.runSimulation(lines);
-        std::vector<int> expected{5, 6, 7, 9, 10, 12, 13, 15};
-        assert(lines == expected);
+        std::vector<int> expected{3, 4, 5, 6, 7, 10, 14, 16};
         print_vector(lines);
+        assert(lines == expected);
         std::cout<<"\ntest2 end.--------------------------------\n";
     }
     {
@@ -132,10 +132,32 @@ void test_codesim()
         sim.bind(preprocess_code);
         std::vector<int> lines;
         sim.runSimulation(lines);
-        std::vector<int> expected{5, 6, 7, 9, 10, 12, 13, 15};
+        std::vector<int> expected{1, 2, 3, 4, 5, 6, 7, 5, 6, 7, 5, 6, 7, 5, 3, 4, 5, 3};
         assert(lines == expected);
         print_vector(lines);
         std::cout<<"\ntest3 end.--------------------------------\n";
+    }
+    {
+        std::cout<<"test4 begin----------------------------------\n";
+        std::ifstream test4("test/test_case/test4/input.txt");
+        std::string line;
+        std::string code;
+        while(test4.good())
+        {
+            std::getline(test4,line);
+            line.push_back('\n');
+            code += line;
+        }
+        std::cout <<code;
+        std::string preprocess_code = preprocessor(code).processed_code();
+        Simulator sim;
+        sim.bind(preprocess_code);
+        std::vector<int> lines;
+        sim.runSimulation(lines);
+        std::vector<int> expected{};
+        //assert(lines == expected);
+        print_vector(lines);
+        std::cout<<"\ntest4 end.--------------------------------\n";
     }
 }
 void test_all()
