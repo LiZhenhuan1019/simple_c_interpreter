@@ -154,8 +154,8 @@ void test_codesim()
         sim.bind(preprocess_code);
         std::vector<int> lines;
         sim.runSimulation(lines);
-        std::vector<int> expected{};
-        //assert(lines == expected);
+        std::vector<int> expected{1, 2, 3, 4, 6, 7, 9, 6, 7, 9, 6, 7, 9, 3, 4, 6, 7, 9, 3};
+        assert(lines == expected);
         print_vector(lines);
         std::cout<<"\ntest4 end.--------------------------------\n";
     }
