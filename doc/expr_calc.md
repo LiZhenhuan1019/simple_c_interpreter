@@ -35,43 +35,43 @@ member type    |definition
 语法记法中'//'后部分为注释.
 
 表达式一共分为以下几层:
-1. _comma_ //逗号表达式 右结合
-  * _assignment_ `,` _comma_
-  * _assignment_
-2. _assignment_ //赋值表达式 右结合
-  * _var_ `=` _assignment_
-  * _relational_
-  * _empty\_expr_ //为支持空语句而设.
-3. _relational_ //关系表达式 左结合
-  * _relational_ _relational_op_ _term_ //其中_relational_op_是任意一个关系运算符(==,!=,<,<=,>,>=)
-  * _term_
-4. _term_ //+ -表达式 左结合
-  * _term_ `+` _factor_
-  * _term_ `-` _factor_
-  * _factor_
-5. _factor_ //* /表达式 左结合
-  * _factor_ `*` _prefix_
-  * _factor_ `/` _prefix_
-  * _prefix_
-6. _prefix_ //前缀自增/自减表达式 右结合
-  * `++` _lvalue\_prefix\_or\_var_
-  * `--` _lvalue\_prefix\_or\_var_
-  * _unary_
-7. _lvalue\_prefix\_or\_var_ //左值表达式,前置自增表达式或者本身是变量
-  * `++` _lvalue\_prefix\_or\_var_
-  * `--` _lvalue\_prefix\_or\_var_
-  * _var_
-8. _unary_ //一元加减表达式 右结合
-  * `+` _prefix_
-  * `-` _prefix_
-  * _postfix_
-9. _postfix_ //后缀自增/自减表达式 左结合
-  * _var_ `++`
-  * _var_ `--`
-  * _primary_
-10. _primary_ //简单表达式 由一个变量或字面量(C语言中被称为常量)组成
-  * _var_  //变量
-  * _literal_  //字面量(C语言中被称为常量).
+1. *comma* //逗号表达式 右结合
+  * *assignment* `,` *comma*
+  * *assignment*
+2. *assignment* //赋值表达式 右结合
+  * *var* `=` *assignment*
+  * *relational*
+  * *empty_expr* //为支持空语句而设.
+3. *relational* //关系表达式 左结合
+  * *relational* *relational_op* *term* //其中*relational_op*是任意一个关系运算符(==,!=,<,<=,>,>=)
+  * *term*
+4. *term* //+ -表达式 左结合
+  * *term* `+` *factor*
+  * *term* `-` *factor*
+  * *factor*
+5. *factor* //* /表达式 左结合
+  * *factor* `*` *prefix*
+  * *factor* `/` *prefix*
+  * *prefix*
+6. *prefix* //前缀自增/自减表达式 右结合
+  * `++` *lvalue_prefix_or_var*
+  * `--` *lvalue_prefix_or_var*
+  * *unary*
+7. *lvalue_prefix_or_var* //左值表达式,前置自增表达式或者本身是变量
+  * `++` *lvalue_prefix_or_var*
+  * `--` *lvalue_prefix_or_var*
+  * *var*
+8. *unary* //一元加减表达式 右结合
+  * `+` *prefix*
+  * `-` *prefix*
+  * *postfix*
+9. *postfix* //后缀自增/自减表达式 左结合
+  * *var* `++`
+  * *var* `--`
+  * *primary*
+10. *primary* //简单表达式 由一个变量或字面量(C语言中被称为常量)组成
+  * *var*  //变量
+  * *literal*  //字面量(C语言中被称为常量).
 
 该列表中表达式对应的运算符的优先级自上而下依次升高.
 
