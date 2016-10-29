@@ -17,6 +17,7 @@ using namespace std;
 
 /*
  * @name __testout
+ * @notice do not use it on anywhere out of class Simulator.
  * @param len
  * @param l
  */
@@ -39,6 +40,7 @@ class Simulator
 {
 public:
     Simulator(){}
+    ~Simulator();
     void bind(string);
     void runSimulation(vector<int>&);
 
@@ -65,6 +67,10 @@ private:
         int lineIndex;
         bool breakNow; //if there's a break command throw out.
 
+        Block(){}
+        Block(BlockType t,int ld=-1):type(t),lineIndex(ld)
+        { if(lineIndex!=-1) printf("[%d]",lineIndex); }
+
         /**
          * @name calc
          * @return value of expression.
@@ -80,9 +86,8 @@ private:
             return t;
         }
 
-
         /**
-         *
+         * @name run
          * @param v symbols.
          * @param hv hidden symbols.
          * @param out to output.
@@ -91,12 +96,12 @@ private:
          *                 if is not block) representing break.
          * @return resault of calculation
          */
+#define NPARAM v,hv,out,depth+1,breakNow
         int run(symbol_table& v,
                            stack<pair<pair<string,int>,int>>&hv,
                            vector<int>&out,
                            int depth,
                            bool&breakNow)
-#define NPARAM v,hv,out,depth+1,breakNow
         {
             if(lineIndex!=-1) out.push_back(lineIndex);
 
@@ -189,8 +194,6 @@ private:
 
                 default: break;
             }
-#undef NPARAM
-
             while(!hv.empty() && hv.top().second>=depth) //the new var shall be disabled.
             {
                 //those pushed into this stack by a depth can now free.
@@ -202,12 +205,20 @@ private:
 
             return ret; //exit 0 normally, 1 break.
         }
+#undef NPARAM
 
-        Block(){}
-        Block(BlockType t,int ld=-1):type(t),lineIndex(ld)
-        { if(lineIndex!=-1) printf("[%d]",lineIndex); }
+        /**
+         * @name suicide
+         *      *delete* *this itself.
+         *      instead of destructor function.
+         */
+        void suicide()
+        {
+            for(int i=0;i<(int)subBlocks.size();i++)
+                subBlocks[i]->suicide();
+            delete this;
+        }
     };
-
 
     Block Main;
     string code;
@@ -246,8 +257,17 @@ private:
     Block* build_expression(int);
     Block* build_expression_nocomma(int);
     Block* build_break(int);
-    Block& build_main(int);
+    void build_main(int);
 };
+
+/**
+ * @name ~Simulator
+ *      destructor.
+ */
+inline Simulator::~Simulator()
+{
+    Main.suicide();
+}
 
 /**
  * @name bind
@@ -745,16 +765,14 @@ inline Simulator::Block* Simulator::build_break(int depth=0)
  * build the main funtion as a block.
  * @process ends with '}'
  */
-inline Simulator::Block& Simulator::build_main(int depth=0)
+inline void Simulator::build_main(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("cmin:[size:%d]\n",(int)code.size());
     while(!eos())
     {
         Main.subBlocks.push_back(build_next(depth + 1));
         pass();
-        //printf("[%c][%d]\n",code[ci],code[ci]);
     }
-    return Main;
 }
 
 #endif //DK_COMPILER_CODE_SIMULATOR_HXX
