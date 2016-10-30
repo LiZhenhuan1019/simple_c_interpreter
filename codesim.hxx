@@ -105,7 +105,7 @@ private:
         {
             if(lineIndex!=-1) out.push_back(lineIndex);
 
-            int ret=0; //normal return value;
+            int ret=-1; //return value;
 
             switch(type)
             {
@@ -120,6 +120,7 @@ private:
                             break;
                         }
                     }
+                    ret=calc(v);
                     break;
 
                 case If:
@@ -492,8 +493,6 @@ inline string Simulator::get_expression_nocomma()
  */
 inline Simulator::Block* Simulator::build_next(int depth=0)
 {
-    //for(int i=0;i<depth;i++) printf("|   ");
-    //printf("create new block: [ci:%d][size:%d][eos:%d] \n",ci,code.size(),eos());
     string token=getword();
     Block*t;
     if(token.compare("int")==0)         t=build_declarations(depth);
@@ -504,14 +503,12 @@ inline Simulator::Block* Simulator::build_next(int depth=0)
     else if(token.compare("while")==0)  t=build_while(depth);
     else if(token.compare("printf")==0) t=build_printf(depth);
     else if(token.compare("break")==0)  t=build_break(depth);
-    else //word is unrecognized or unable to read word.
+    else //expression OR empty.
     {
         back();
-        char c=getsymbol();
-        if(c==';') t=build_empty(depth); //unable to read word.
-        else
-        t=build_expression(depth); //unrecognized word.
+        t=build_expression(depth);
     }
+
     return t;
 }
 
@@ -522,7 +519,7 @@ inline Simulator::Block* Simulator::build_next(int depth=0)
  */
 inline Simulator::Block* Simulator::build_empty(int depth=0)
 {
-    __testout(depth,"empty.");
+    for(int i=0;i<depth;i++) printf("|   "); printf("empty : \n");
     Block*t=new Block(Block::Empty);
     t->expression=string("");
     getsymbol(); //skip ';'
@@ -537,10 +534,20 @@ inline Simulator::Block* Simulator::build_empty(int depth=0)
 inline Simulator::Block* Simulator::build_expression(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   ");
-    Block* t=new Block(Block::Calculation,linenum);
+    Block* t=new Block(Block::Jump);
+    int cline=linenum;
     t->expression=get_expression();
+    for(int i=0;i<(int)t->expression.size();i++)
+        if( (t->expression[i]>='a' && t->expression[i]<='z') ||
+            (t->expression[i]>='A' && t->expression[i]<='Z') ||
+            t->expression[i]=='_')
+            {
+                t->type=Block::Calculation;
+                t->lineIndex=cline;
+                break;
+            }
+    printf("expr:%s%s\n",t->expression.data(),t->type==Block::Jump?"[N]":"");
     getsymbol(); //skip ';' or ')'
-    printf("expr:%s\n",t->expression.data());
     return t;
 }
 
@@ -647,7 +654,7 @@ inline Simulator::Block* Simulator::build_expression_nocomma(int depth=0)
     for(int i=0;i<depth;i++) printf("|   ");
     Block* t=new Block(Block::Calculation,linenum);
     t->expression=get_expression_nocomma();
-    getsymbol(); //skip ';' or ','
+    //getsymbol(); //skip ';' or ','
     printf("expn: %s \n",t->expression.data());
     return t;
 }
@@ -665,10 +672,10 @@ inline Simulator::Block* Simulator::build_for(int depth=0)
     Block*t=new Block(Block::For);
     getsymbol(); //skip '('
     t->subBlocks.push_back(build_next(depth+1));
-    t->subBlocks.push_back(build_expression(depth+1));
-    t->subBlocks.push_back(build_expression(depth+1));
     t->subBlocks.push_back(build_next(depth+1));
-    for(int i=0;i<depth;i++) printf("|   "); printf("End:for\n");
+    t->subBlocks.push_back(build_next(depth+1));
+    t->subBlocks.push_back(build_next(depth+1));
+    // for(int i=0;i<depth;i++) printf("|   "); printf("End:for\n");
     return t;
 }
 
@@ -685,7 +692,7 @@ inline Simulator::Block* Simulator::build_while(int depth=0)
     getsymbol(); //skip '('
     t->subBlocks.push_back(build_expression(depth+1));
     t->subBlocks.push_back(build_next(depth+1));
-    for(int i=0;i<depth;i++) printf("|   "); printf("End:whi\n");
+    //for(int i=0;i<depth;i++) printf("|   "); printf("End:whi\n");
     return t;
 }
 
@@ -705,7 +712,7 @@ inline Simulator::Block* Simulator::build_dowhile(int depth=0)
     getsymbol(); //skip '('
     t->subBlocks.push_back(build_expression(depth+1));
     getsymbol(); //skip ';'
-    for(int i=0;i<depth;i++) printf("|   "); printf("End:dwi\n");
+    //for(int i=0;i<depth;i++) printf("|   "); printf("End:dwi\n");
     return t;
 }
 
@@ -720,7 +727,7 @@ inline Simulator::Block* Simulator::build_dowhile(int depth=0)
 inline Simulator::Block* Simulator::build_printf(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("prin: \n");
-    Block*t=new Block(Block::Jump);
+    Block*t=new Block(Block::Jump,linenum);
 
     /* disabled. too difficult to complete! */
     /*
