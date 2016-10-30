@@ -266,7 +266,8 @@ private:
  */
 inline Simulator::~Simulator()
 {
-    Main.suicide();
+    for(int i=0;i<(int)Main.subBlocks.size();i++)
+        Main.subBlocks[i]->suicide();
 }
 
 /**
