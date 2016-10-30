@@ -105,7 +105,7 @@ private:
         {
             if(lineIndex!=-1) out.push_back(lineIndex);
 
-            int ret=-1; //return value;
+            int ret=0; //return value;
 
             switch(type)
             {
@@ -120,7 +120,7 @@ private:
                             break;
                         }
                     }
-                    ret=calc(v);
+                    ret=1; //for empty expr.
                     break;
 
                 case If:
@@ -671,10 +671,21 @@ inline Simulator::Block* Simulator::build_for(int depth=0)
     for(int i=0;i<depth;i++) printf("|   "); printf("for : \n");
     Block*t=new Block(Block::For);
     getsymbol(); //skip '('
+    pass();
+    int ln=linenum;
     t->subBlocks.push_back(build_next(depth+1));
+    t->subBlocks[0]->lineIndex=ln; //assume the same line
+
+    ln=linenum;
     t->subBlocks.push_back(build_next(depth+1));
+    t->subBlocks[1]->lineIndex=ln;
+
+    ln=linenum;
     t->subBlocks.push_back(build_next(depth+1));
+    t->subBlocks[2]->lineIndex=ln;
+
     t->subBlocks.push_back(build_next(depth+1));
+
     // for(int i=0;i<depth;i++) printf("|   "); printf("End:for\n");
     return t;
 }
@@ -690,7 +701,9 @@ inline Simulator::Block* Simulator::build_while(int depth=0)
     for(int i=0;i<depth;i++) printf("|   "); printf("whil:\n");
     Block*t=new Block(Block::While);
     getsymbol(); //skip '('
+    int ln=linenum;
     t->subBlocks.push_back(build_expression(depth+1));
+    t->subBlocks[0]->lineIndex=ln;
     t->subBlocks.push_back(build_next(depth+1));
     //for(int i=0;i<depth;i++) printf("|   "); printf("End:whi\n");
     return t;
@@ -710,7 +723,10 @@ inline Simulator::Block* Simulator::build_dowhile(int depth=0)
     t->subBlocks.push_back(build_next(depth+1));
     getword(); //skip "while"
     getsymbol(); //skip '('
+    pass();
+    int ln=linenum;
     t->subBlocks.push_back(build_expression(depth+1));
+    t->subBlocks[1]->lineIndex=ln;
     getsymbol(); //skip ';'
     //for(int i=0;i<depth;i++) printf("|   "); printf("End:dwi\n");
     return t;
@@ -726,8 +742,10 @@ inline Simulator::Block* Simulator::build_dowhile(int depth=0)
  */
 inline Simulator::Block* Simulator::build_printf(int depth=0)
 {
-    for(int i=0;i<depth;i++) printf("|   "); printf("prin: \n");
+    for(int i=0;i<depth;i++) printf("|   ");
     Block*t=new Block(Block::Jump,linenum);
+    printf("prin: \n");
+
 
     /* disabled. too difficult to complete! */
     /*
