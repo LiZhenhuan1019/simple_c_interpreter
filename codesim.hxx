@@ -4,6 +4,7 @@
 #include <stack>
 #include <fstream>
 #include <iostream>
+#include <memory>
 using namespace std;
 
 #include "code_fragment.h"
@@ -40,7 +41,6 @@ class Simulator
 {
 public:
     Simulator(){}
-    ~Simulator();
     void bind(string);
     void runSimulation(vector<int>&);
 
@@ -62,7 +62,7 @@ private:
         };
 
         string expression;
-        vector<Block*> subBlocks;
+        vector<std::unique_ptr<Block>> subBlocks;
         BlockType type;
         int lineIndex;
         bool breakNow; //if there's a break command throw out.
@@ -207,17 +207,6 @@ private:
         }
 #undef NPARAM
 
-        /**
-         * @name suicide
-         *      *delete* *this itself.
-         *      instead of destructor function.
-         */
-        void suicide()
-        {
-            for(int i=0;i<(int)subBlocks.size();i++)
-                subBlocks[i]->suicide();
-            delete this;
-        }
     };
 
     Block Main;
@@ -244,30 +233,22 @@ private:
 
     bool eos();
 
-    Block* build_empty(int);
-    Block* build_next(int);
-    Block* build_declarations(int);
-    Block* build_declaration_single(int);
-    Block* build_if(int);
-    Block* build_block(int);
-    Block* build_for(int);
-    Block* build_dowhile(int);
-    Block* build_while(int);
-    Block* build_printf(int);
-    Block* build_expression(int);
-    Block* build_expression_nocomma(int);
-    Block* build_break(int);
+    std::unique_ptr<Block> build_empty(int);
+    std::unique_ptr<Block> build_next(int);
+    std::unique_ptr<Block> build_declarations(int);
+    std::unique_ptr<Block> build_declaration_single(int);
+    std::unique_ptr<Block> build_if(int);
+    std::unique_ptr<Block> build_block(int);
+    std::unique_ptr<Block> build_for(int);
+    std::unique_ptr<Block> build_dowhile(int);
+    std::unique_ptr<Block> build_while(int);
+    std::unique_ptr<Block> build_printf(int);
+    std::unique_ptr<Block> build_expression(int);
+    std::unique_ptr<Block> build_expression_nocomma(int);
+    std::unique_ptr<Block> build_break(int);
     void build_main(int);
 };
 
-/**
- * @name ~Simulator
- *      destructor.
- */
-inline Simulator::~Simulator()
-{
-    Main.suicide();
-}
 
 /**
  * @name bind
@@ -489,12 +470,12 @@ inline string Simulator::get_expression_nocomma()
  * @name build_next
  * @return a new block alongside with next code block or line.
  */
-inline Simulator::Block* Simulator::build_next(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_next(int depth=0)
 {
     //for(int i=0;i<depth;i++) printf("|   ");
     //printf("create new block: [ci:%d][size:%d][eos:%d] \n",ci,code.size(),eos());
     string token=getword();
-    Block*t;
+    std::unique_ptr<Block>t;
     if(token.compare("int")==0)         t=build_declarations(depth);
     else if(token.compare("if")==0)     t=build_if(depth);
     else if(token.compare("{")==0)      t=build_block(depth);
@@ -519,10 +500,10 @@ inline Simulator::Block* Simulator::build_next(int depth=0)
  * @return a do-nothing block.
  * @process ends with ';'
  */
-inline Simulator::Block* Simulator::build_empty(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_empty(int depth=0)
 {
     __testout(depth,"empty.");
-    Block*t=new Block(Block::Empty);
+    std::unique_ptr<Block>t(new Block(Block::Empty));
     t->expression=string("");
     getsymbol(); //skip ';'
     return t;
@@ -533,10 +514,10 @@ inline Simulator::Block* Simulator::build_empty(int depth=0)
  * @return a block builded following of expression grammer.
  * @process ends with the last character of expression.
 */
-inline Simulator::Block* Simulator::build_expression(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_expression(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   ");
-    Block* t=new Block(Block::Calculation,linenum);
+    std::unique_ptr<Block> t(new Block(Block::Calculation,linenum));
     t->expression=get_expression();
     getsymbol(); //skip ';' or ')'
     printf("expr:%s\n",t->expression.data());
@@ -551,10 +532,10 @@ inline Simulator::Block* Simulator::build_expression(int depth=0)
  *          character '{' is thrown before call.
  * @process ends with '}'
  */
-inline Simulator::Block* Simulator::build_block(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_block(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("blk : \n");
-    Block* t=new Block(Block::Jump);
+    std::unique_ptr<Block> t(new Block(Block::Jump));
     char c;
     c=getsymbol();
     while(c!='}')
@@ -572,10 +553,10 @@ inline Simulator::Block* Simulator::build_block(int depth=0)
  * @return a block builded following  if() ...; else ...;
  * @attention word "if" is thrown befor call.
  */
-inline Simulator::Block* Simulator::build_if(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_if(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("if  : \n");
-    Block* t=new Block(Block::If);
+    std::unique_ptr<Block> t(new Block(Block::If));
     getsymbol(); //skip '('
     t->subBlocks.push_back(build_expression(depth+1));
     t->subBlocks.push_back(build_next(depth+1));
@@ -594,10 +575,10 @@ inline Simulator::Block* Simulator::build_if(int depth=0)
  * @attention word "int" is thrown before call.
  * @process ends with ';'
  */
-inline Simulator::Block* Simulator::build_declarations(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_declarations(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("decs:\n");
-    Block* t=new Block(Block::Jump);
+    std::unique_ptr<Block> t(new Block(Block::Jump));
     char c;
     do
     {
@@ -623,11 +604,11 @@ inline Simulator::Block* Simulator::build_declarations(int depth=0)
  * @attention Declaration ONLY! another assignment function should be placed.
  *            Following the  "... = ... ," or single "...,".
  */
-inline Simulator::Block* Simulator::build_declaration_single(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_declaration_single(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   ");
     string w=getword();
-    Block*t=new Block(Block::Declaration);
+    std::unique_ptr<Block>t(new Block(Block::Declaration));
     t->expression=w;
     printf("decl: %s\n",t->expression.data());
     return t;
@@ -641,10 +622,10 @@ inline Simulator::Block* Simulator::build_declaration_single(int depth=0)
  *          also, comma will terminate expression building.
  * @process ends with the last character of expression.
  */
-inline Simulator::Block* Simulator::build_expression_nocomma(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_expression_nocomma(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   ");
-    Block* t=new Block(Block::Calculation,linenum);
+    std::unique_ptr<Block> t(new Block(Block::Calculation,linenum));
     t->expression=get_expression_nocomma();
     getsymbol(); //skip ';' or ','
     printf("expn: %s \n",t->expression.data());
@@ -658,10 +639,10 @@ inline Simulator::Block* Simulator::build_expression_nocomma(int depth=0)
  * @attention folling grammer "for( ... ; ... ; ...[,...] ) ..."
  *            word 'for' is thrown before call.
  */
-inline Simulator::Block* Simulator::build_for(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_for(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("for : \n");
-    Block*t=new Block(Block::For);
+    std::unique_ptr<Block>t(new Block(Block::For));
     getsymbol(); //skip '('
     t->subBlocks.push_back(build_next(depth+1));
     t->subBlocks.push_back(build_expression(depth+1));
@@ -677,10 +658,10 @@ inline Simulator::Block* Simulator::build_for(int depth=0)
  * @attention folling grammer "while(...) ...;"
  *            word "while" is thrown before call.
  */
-inline Simulator::Block* Simulator::build_while(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_while(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("whil:\n");
-    Block*t=new Block(Block::While);
+    std::unique_ptr<Block>t(new Block(Block::While));
     getsymbol(); //skip '('
     t->subBlocks.push_back(build_expression(depth+1));
     t->subBlocks.push_back(build_next(depth+1));
@@ -695,10 +676,10 @@ inline Simulator::Block* Simulator::build_while(int depth=0)
  *            word "do" is thrown before call.
  * @process ends with ';'
  */
-inline Simulator::Block* Simulator::build_dowhile(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_dowhile(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("dwi: \n");
-    Block*t=new Block(Block::DoWhile);
+    std::unique_ptr<Block>t(new Block(Block::DoWhile));
     t->subBlocks.push_back(build_next(depth+1));
     getword(); //skip "while"
     getsymbol(); //skip '('
@@ -716,10 +697,10 @@ inline Simulator::Block* Simulator::build_dowhile(int depth=0)
  *            word "printf" is thrown before call.
  * @process ends with ';'
  */
-inline Simulator::Block* Simulator::build_printf(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_printf(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   "); printf("prin: \n");
-    Block*t=new Block(Block::Jump);
+    std::unique_ptr<Block>t(new Block(Block::Jump));
 
     /* disabled. too difficult to complete! */
     /*
@@ -751,10 +732,10 @@ inline Simulator::Block* Simulator::build_printf(int depth=0)
  * @attention will functionally applied by it's father function in run().
  * @procession ends with ';'
  */
-inline Simulator::Block* Simulator::build_break(int depth=0)
+inline std::unique_ptr<Simulator::Block> Simulator::build_break(int depth=0)
 {
     for(int i=0;i<depth;i++) printf("|   ");
-    Block*t=new Block(Block::Break,linenum);
+    std::unique_ptr<Block>t(new Block(Block::Break,linenum));
     printf("brk :\n");
     getsymbol(); //skip ';'
     return t;
