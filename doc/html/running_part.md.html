@@ -2,7 +2,7 @@
 <html>
   <head>
       <meta charset="utf-8" />
-      <title>index</title>
+      <title>running_part</title>
       <style>.markdown-preview:not([data-use-github-style]) { padding: 2em; font-size: 1.2em; color: rgb(56, 58, 66); overflow: auto; background-color: rgb(250, 250, 250); }
 .markdown-preview:not([data-use-github-style]) > :first-child { margin-top: 0px; }
 .markdown-preview:not([data-use-github-style]) h1, .markdown-preview:not([data-use-github-style]) h2, .markdown-preview:not([data-use-github-style]) h3, .markdown-preview:not([data-use-github-style]) h4, .markdown-preview:not([data-use-github-style]) h5, .markdown-preview:not([data-use-github-style]) h6 { line-height: 1.2; margin-top: 1.5em; margin-bottom: 0.5em; color: rgb(0, 0, 0); }
@@ -499,22 +499,33 @@ pre.editor-colors .fold-marker:after,
 }
 </style>
   </head>
-  <body class='markdown-preview' data-use-github-style><h1 id="simple-c-interpreter-">Simple C Interpreter文档</h1>
-<h2 id="-">简介</h2>
-<p>本项目用于解析简单的C语言代码片段,并按执行顺序输出代码的行号.目前本项目用于参加<code>2016&quot;亚马逊•种子杯&quot;编程PK赛初赛</code>.</p>
-<h2 id="-">完成度</h2>
-<p>本项目对表达式的处理的灵活程度<strong>超过</strong>了该比赛的要求.如,以下语句在C中合理,在本项目处理的语句中也合理(假定其中变量均经过定义):</p>
-<pre class="editor-colors lang-text"><div class="line"><span class="text plain"><span class="meta paragraph text"><span>a&nbsp;=&nbsp;5;</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>long_name&nbsp;=&nbsp;7;</span></span></span></div><div class="line"><span class="text plain"><span class="meta paragraph text"><span>++a&nbsp;+10/2&nbsp;&gt;&nbsp;--long_name&nbsp;+&nbsp;4;//返回1</span></span></span></div></pre><h2 id="-">编译器说明</h2>
-<p>使用gcc 4.9.3或以上的编译器.并添加编译选项<code>-std=gnu++11 -finput-charset=utf-8 -fexec-charset=GBK</code>.</p>
-<p>如果编译器支持<code>std::optional</code>,编译时可以加上选项<code>-DSTD_OPTIONAL</code></p>
-<h2 id="running-part">Running part</h2>
-<p>请见<a href="running_part.md.html">Running part</a></p>
-<h2 id="-">组件文档</h2>
+  <body class='markdown-preview' data-use-github-style><p><a href="index.md.html">首页</a></p>
+<p>本项目模拟代码的顺序执行过程,所有表达式,break和printf语句的行号都会被计入.</p>
 <ul>
-<li><a href="codesim.md.html">解释器</a> 用于解释执行一片代码并得出代码执行的行号序列.</li>
-<li><a href="preprocessor.md.html">预处理器</a> 用于对即将传给<a href="codesim.md.html">解释器</a>的代码进行预处理.</li>
-<li><a href="symbol_table.md.html">符号表</a> 用于存储变量名及其值.</li>
-<li><a href="expr_calc.md.html">表达式计算</a> 用于计算表达式的值,并执行表达式中的副作用(如修改变量的值).</li>
-<li><a href="code_fragment.md.html">代码片段</a> 对一片待解析的代码的抽象.</li>
-</ul></body>
+<li>本项目<strong>完全支持</strong>题目要求中的C语言语法与关键字(根据题目需求,本项目将printf识别为关键字),支持变量作用域.</li>
+</ul>
+<ul>
+<li>本项目<strong>支持非常规的缩进与换行格式</strong>,例如</li>
+</ul>
+<blockquote>
+<p>for(int i=0;<br>i&lt;10;<br>i++)  {a++;}</p>
+</blockquote>
+<p>以及</p>
+<blockquote>
+<p>if(i==0){a++;}else b++;</p>
+</blockquote>
+<p>处理以上语句时,每个表达式的每次执行都会被考虑在内,其行号亦能被正确地输出或屏蔽.</p>
+<ul>
+<li>本项目<strong>支持独立的(不与if语句和循环语句连接的)花括号</strong>.例如</li>
+</ul>
+<blockquote>
+<p>{ int a=1; { int a=2; { int a=3; } } }</p>
+</blockquote>
+<h3 id="-">时间复杂度</h3>
+<p><strong>代码分析的时间复杂度为O(t+mlogm)</strong>. 其中 <em>t</em> 为代码的字符总数,<em>m</em> 为可同时存在的变量个数的最大值.</p>
+<p><strong>代码执行的时间复杂度O(nlogm)</strong>. 其中 <em>n</em> 为输入代码的实际运行行数, <em>m</em> 为可同时存在的变量个数的最大值.</p>
+<p>本项目程序逐一运行输入的代码的语句,因而输入代码的计算次数过高会导致本项目程序无法结束或输出不正确的结果.</p>
+<h3 id="-">空间复杂度</h3>
+<p><strong>代码执行和分析的空间复杂度均为O(n)</strong>. 其中 <em>n</em> 为代码的字符总数.</p>
+<p>实际运行时,请保证:至少有<strong>4倍于输入程序中声明变量所消耗内存</strong>供本项目程序调用.</p></body>
 </html>

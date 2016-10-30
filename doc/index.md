@@ -12,6 +12,8 @@ long_name = 7;
 使用gcc 4.9.3或以上的编译器.并添加编译选项`-std=gnu++11 -finput-charset=utf-8 -fexec-charset=GBK`.
 
 如果编译器支持`std::optional`,编译时可以加上选项`-DSTD_OPTIONAL`
+## Running part
+请见[Running part](running_part.md.html)
 
 ## 组件文档
 * [解释器](codesim.md.html) 用于解释执行一片代码并得出代码执行的行号序列.
