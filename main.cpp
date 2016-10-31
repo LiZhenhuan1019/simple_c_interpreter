@@ -11,8 +11,10 @@
 void output(std::vector<int> ints)
 {
     std::ofstream output("./output.txt");
-    for(auto i :ints)
-        output<<i<<" ";
+    std::size_t i = 0;
+    for(;i<ints.size()-1;++i)
+        output<<ints[i]<<" ";
+    output<<ints[i];
 }
 #endif
 int main()
